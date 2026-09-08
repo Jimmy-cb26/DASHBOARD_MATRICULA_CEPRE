@@ -1,0 +1,25 @@
+# Archivos con secretos y credenciales (según MVP sección 6.4 y 8)
+.env
+credentials.yaml
+demo_data.sqlite
+
+# Python cache y entornos virtuales
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# Streamlit logs y configuraciones locales
+.streamlit/secrets.toml
+
+# IDE y sistema operativo
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
