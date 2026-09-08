@@ -75,7 +75,7 @@ def _build_where_clause(filters: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
     return " AND ".join(clauses), params
 
 
-@st.cache_data(ttl=30)
+@st.cache_data(ttl=300)
 def get_distinct_filter_values() -> Dict[str, Any]:
     """
     Obtiene las opciones disponibles para los filtros dinámicos (SELECT DISTINCT)
@@ -128,7 +128,7 @@ def get_distinct_filter_values() -> Dict[str, Any]:
 @st.cache_data(ttl=30)
 def get_kpis(filters: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Calcula los 4 KPIs requeridos respetando los filtros activos:
+    Calcula los 4 KPIs requeridos respetando los filtros activos en una sola consulta:
     1. Total de matriculados
     2. Locales activos con matrícula
     3. Carreras con al menos 1 matriculado
@@ -138,32 +138,31 @@ def get_kpis(filters: Dict[str, Any]) -> Dict[str, Any]:
     view = get_view_name()
     where_sql, params = _build_where_clause(filters)
 
-    # Consulta consolidada de KPIs
-    sql_kpis = f"""
+    today_str = date.today().strftime("%Y-%m-%d")
+    params_kpis = {**params, "today_date": today_str}
+
+    # Consulta unificada atómica (evita dos lecturas y dos conexiones independientes)
+    sql = f"""
         SELECT 
             COUNT(*) AS total_matriculados,
             COUNT(DISTINCT LOCAL) AS locales_activos,
-            COUNT(DISTINCT CARRERA) AS carreras_activas
+            COUNT(DISTINCT CARRERA) AS carreras_activas,
+            COALESCE(SUM(CASE WHEN fecha_matricula = :today_date THEN 1 ELSE 0 END), 0) AS matriculados_hoy
         FROM {view}
         WHERE {where_sql}
     """
 
-    today_str = date.today().strftime("%Y-%m-%d")
-    sql_hoy = f"""
-        SELECT COUNT(*) AS matriculados_hoy
-        FROM {view}
-        WHERE {where_sql} AND fecha_matricula = :today_date
-    """
-    params_hoy = {**params, "today_date": today_str}
-
     with engine.connect() as conn:
-        df_res = pd.read_sql_query(text(sql_kpis), con=conn, params=params)
-        df_hoy = pd.read_sql_query(text(sql_hoy), con=conn, params=params_hoy)
+        df = pd.read_sql_query(text(sql), con=conn, params=params_kpis)
 
-    total = int(df_res["total_matriculados"].iloc[0]) if not df_res.empty else 0
-    locales = int(df_res["locales_activos"].iloc[0]) if not df_res.empty else 0
-    carreras = int(df_res["carreras_activas"].iloc[0]) if not df_res.empty else 0
-    hoy = int(df_hoy["matriculados_hoy"].iloc[0]) if not df_hoy.empty else 0
+    if not df.empty:
+        row = df.iloc[0]
+        total = int(row["total_matriculados"])
+        locales = int(row["locales_activos"])
+        carreras = int(row["carreras_activas"])
+        hoy = int(row["matriculados_hoy"])
+    else:
+        total, locales, carreras, hoy = 0, 0, 0, 0
 
     return {
         "total_matriculados": total,

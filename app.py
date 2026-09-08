@@ -11,9 +11,11 @@ Desarrollado con Streamlit y Plotly aplicando principios de alta fidelidad:
 """
 
 from datetime import datetime, date
+import pandas as pd
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+
 
 # Configuración inicial de la página
 st.set_page_config(
@@ -34,7 +36,9 @@ from styles import (
     COLOR_PALETTE,
     TURNO_COLORS,
     AREA_COLORS,
+    AREA_LABELS,
 )
+
 
 # 1. Inicialización de tema y estilos
 if "theme" not in st.session_state:
@@ -46,6 +50,15 @@ is_dark = (st.session_state.theme == "dark")
 # 2. Control previo de acceso (Login Gate)
 authenticator = load_authenticator()
 authenticator, username, user_name = setup_auth_flow(authenticator)
+
+# Feedback sensorial (Delight): notificación de acciones ejecutadas
+if "toast_msg" in st.session_state:
+    toast_text = st.session_state.pop("toast_msg", "")
+    toast_icon = st.session_state.pop("toast_icon", "🏛️")
+    try:
+        st.toast(toast_text, icon=toast_icon)
+    except Exception:
+        st.toast(toast_text, icon="🏛️")
 
 # 3. Conexión a la base de datos (En vivo o Fallback persistente)
 engine, is_demo, conn_status = get_db_engine()
@@ -138,11 +151,27 @@ with st.sidebar:
         st.session_state.sb_area = "Todas las áreas"
         st.session_state.date_start = min_date
         st.session_state.date_end = max_date
+        st.session_state["toast_msg"] = "Filtros restablecidos a la vista general"
+        st.session_state["toast_icon"] = "🔄"
+
+    def format_ciclo_label(c: str) -> str:
+        """Traduce códigos técnicos como ORD_2026_II a nombres institucionales claros."""
+        if not c:
+            return ""
+        parts = c.split("_")
+        if len(parts) >= 3:
+            tipo_map = {"ORD": "Ordinario", "ESP": "Especial", "SUP": "Superintensivo"}
+            tipo = tipo_map.get(parts[0], parts[0])
+            año = parts[1]
+            romano = parts[2]
+            return f"{tipo} {año}-{romano} ({c})"
+        return c
 
     # Selector de Ciclo Académico (Ciclo único, sin opción 'Todos los ciclos', ORD_2026_II por defecto)
     selected_ciclo = st.selectbox(
         "Ciclo Académico",
         options=ciclos_disponibles,
+        format_func=format_ciclo_label,
         key="sb_ciclo",
     )
     selected_ciclos = [selected_ciclo] if selected_ciclo else []
@@ -167,11 +196,7 @@ with st.sidebar:
 
     area_labels = {
         "Todas las áreas": "Todas las áreas",
-        "A": "Área A: Ciencias de la Salud",
-        "B": "Área B: Ciencias Básicas",
-        "C": "Área C: Ingenierías",
-        "D": "Área D: Ciencias Económicas y Gestión",
-        "E": "Área E: Humanidades y Ciencias Sociales",
+        **AREA_LABELS,
     }
     area_options = ["Todas las áreas"] + filter_options["areas"]
     selected_area = st.selectbox(
@@ -200,7 +225,7 @@ with st.sidebar:
         )
 
     if fecha_inicio and fecha_fin and fecha_inicio > fecha_fin:
-        st.warning("⚠️ La Fecha Inicio no puede ser posterior a Fecha Fin.")
+        st.warning("⚠️ El rango de fechas seleccionado se ajustó automáticamente.")
         fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
 
     st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
@@ -215,8 +240,10 @@ with st.sidebar:
         )
 
     with col_btn2:
-        if st.button("Refrescar", use_container_width=True, help="Forzar consulta inmediata a la base de datos"):
+        if st.button("Actualizar", use_container_width=True, help="Consultar los datos más recientes de matrícula"):
             st.cache_data.clear()
+            st.session_state["toast_msg"] = "Base de datos sincronizada: datos de matrícula al día"
+            st.session_state["toast_icon"] = "⚡"
             st.rerun()
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
@@ -230,10 +257,10 @@ with st.sidebar:
         st.markdown(
             f"""
             <div style="background: {badge_bg}; border: 1px solid {badge_border}; border-radius: 10px; padding: 10px 12px;">
-                <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: {badge_title_color};">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.875rem; color: {badge_title_color};">
                     <span class="pulse-demo"></span> Modo Demostración
                 </div>
-                <div style="font-size: 0.72rem; color: {badge_sub_color}; margin-top: 4px;">
+                <div style="font-size: 0.75rem; color: {badge_sub_color}; margin-top: 4px;">
                     Datos sintéticos activos. Configure <code>.env</code> para conectar a la base de datos en vivo.
                 </div>
             </div>
@@ -248,10 +275,10 @@ with st.sidebar:
         st.markdown(
             f"""
             <div style="background: {badge_bg}; border: 1px solid {badge_border}; border-radius: 10px; padding: 10px 12px;">
-                <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.8rem; color: {badge_title_color};">
+                <div style="display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.875rem; color: {badge_title_color};">
                     <span class="pulse-live"></span> Conectado en Vivo
                 </div>
-                <div style="font-size: 0.72rem; color: {badge_sub_color}; margin-top: 4px; font-family: monospace;">
+                <div style="font-size: 0.75rem; color: {badge_sub_color}; margin-top: 4px; font-family: monospace;">
                     Servidor de Datos Institucional
                 </div>
             </div>
@@ -283,9 +310,10 @@ active_filters_count = sum([
 header_col1, header_col2 = st.columns([3.2, 1.3])
 
 with header_col1:
+    ciclo_display = format_ciclo_label(selected_ciclo) if selected_ciclo else ""
     filter_tag_html = (
         f"<span style='color: #2563EB; font-weight: 700;'>• {active_filters_count} filtro(s) activo(s)</span>"
-        if active_filters_count > 0 else f"<span style='color: #64748B;'>• Ciclo {selected_ciclo}</span>"
+        if active_filters_count > 0 else f"<span style='color: var(--text-secondary);'>• {ciclo_display}</span>"
     )
     st.markdown(
         f"""
@@ -297,7 +325,7 @@ with header_col1:
                 Monitoreo Ejecutivo de Matrículas
             </h1>
             <p class="header-subtitle">
-                Telemetría en tiempo real del proceso de admisión, volumen de inscripciones y capacidad por sede
+                Monitoreo en tiempo real del proceso de admisión, ritmo de inscripciones y distribución territorial
             </p>
         </div>
         """,
@@ -314,8 +342,8 @@ with header_col2:
                 <span class="{status_dot_class}"></span>
                 <span>{status_text}</span>
             </div>
-            <div style="font-size: 0.76rem; color: #64748B; margin-top: 6px; font-variant-numeric: tabular-nums;">
-                Sincronizado: <b>{datetime.now().strftime('%H:%M:%S')}</b>
+            <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 6px; font-variant-numeric: tabular-nums;">
+                Última sincronización: <b>{datetime.now().strftime('%H:%M:%S')}</b>
             </div>
         </div>
         """,
@@ -347,7 +375,7 @@ with kpi_c2:
         create_kpi_card_html(
             title="Locales Activos",
             value=str(kpi_data["locales_activos"]),
-            subtitle="Sedes con inscripción",
+            subtitle="Sedes con postulantes registrados",
             icon="🏫",
             accent_color="#0284C7",
             icon_bg="rgba(2, 132, 199, 0.08)",
@@ -360,7 +388,7 @@ with kpi_c3:
         create_kpi_card_html(
             title="Carreras Activas",
             value=str(kpi_data["carreras_activas"]),
-            subtitle="Programas con demanda",
+            subtitle="Programas académicos solicitados",
             icon="🎓",
             accent_color="#6366F1",
             icon_bg="rgba(99, 102, 241, 0.08)",
@@ -370,9 +398,10 @@ with kpi_c3:
 
 with kpi_c4:
     matriculados_hoy = kpi_data["matriculados_hoy"]
-    subt_hoy = f"Corte del día: {kpi_data['fecha_consulta']}" if matriculados_hoy > 0 else "Sin registros hoy a la fecha"
+    subt_hoy = "Inscripciones registradas hoy" if matriculados_hoy > 0 else "Sin nuevas inscripciones hoy"
     accent_hoy = "#059669" if matriculados_hoy > 0 else "#64748B"
     icon_bg_hoy = "rgba(5, 150, 105, 0.08)" if matriculados_hoy > 0 else "rgba(100, 116, 139, 0.08)"
+    badge_hoy = "● Ritmo activo" if matriculados_hoy > 0 else None
     
     st.markdown(
         create_kpi_card_html(
@@ -382,6 +411,9 @@ with kpi_c4:
             icon="📅",
             accent_color=accent_hoy,
             icon_bg=icon_bg_hoy,
+            badge=badge_hoy,
+            badge_bg="rgba(5, 150, 105, 0.12)",
+            badge_color="#059669",
         ),
         unsafe_allow_html=True,
     )
@@ -397,15 +429,25 @@ if kpi_data["total_matriculados"] == 0:
     st.markdown(
         f"""
         <div style="background: {empty_bg}; border: 1px solid {empty_border}; border-radius: 12px; padding: 1.5rem; text-align: center; margin: 1rem 0;">
-            <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🔍</div>
-            <div style="font-weight: 700; color: {empty_title}; font-size: 1rem;">No se encontraron registros coincidentes</div>
-            <p style="color: {empty_text}; font-size: 0.85rem; margin-top: 0.25rem;">
-                Modifique los filtros en la barra lateral o presione <b>Restablecer</b> para regresar a la vista general.
+            <div style="font-size: 1.35rem; margin-bottom: 0.5rem;">🔍</div>
+            <div style="font-weight: 700; color: {empty_title}; font-size: 1.1rem;">No se encontraron registros coincidentes</div>
+            <p style="color: {empty_text}; font-size: 0.875rem; margin-top: 0.25rem;">
+                Modifique los filtros en la barra lateral o presione el botón inferior para regresar a la vista general.
             </p>
         </div>
         """,
         unsafe_allow_html=True,
     )
+    col_empty_left, col_empty_btn, col_empty_right = st.columns([1.5, 1, 1.5])
+    with col_empty_btn:
+        if st.button(
+            "↺ Restablecer todos los filtros",
+            key="btn_reset_empty",
+            on_click=reset_filters_callback,
+            type="primary",
+            use_container_width=True,
+        ):
+            st.rerun()
     st.stop()
 
 # -----------------------------------------------------------------------------
@@ -420,7 +462,7 @@ with row1_col1:
             <div class="chart-header-row">
                 <div>
                     <div class="chart-title-main">Matriculados por Ciclo, Local y Turno</div>
-                    <div class="chart-desc">Resumen tabular de alumnos matriculados por sede y turno con cálculo de total general</div>
+                    <div class="chart-desc">Distribución consolidada de postulantes por sede institucional y turno</div>
                 </div>
                 <span class="chart-tag">Matriz Consolidada</span>
             </div>
@@ -439,12 +481,12 @@ with row1_col1:
                 unsafe_allow_html=True,
             )
 
-            # Barra de resumen y descarga
-            col_act1, col_act2 = st.columns([1.4, 1.2])
+            # Barra de resumen y descarga ejecutiva
+            col_act1, col_act2 = st.columns([1.3, 1.3])
             with col_act1:
                 st.markdown(
                     f"""
-                    <div style="display: flex; align-items: center; gap: 8px; padding: 0.35rem 0; font-size: 0.82rem; color: var(--text-secondary);">
+                    <div style="display: flex; align-items: center; gap: 8px; padding: 0.35rem 0; font-size: 0.875rem; color: var(--text-secondary); flex-wrap: wrap;">
                         <span>📌 Registros: <b>{len(df_resumen)} sedes/turnos</b></span>
                         <span>•</span>
                         <span>Total: <b style="color: var(--text-primary); font-size: 0.95rem; font-variant-numeric: tabular-nums;">{total_matriculados_tabla:,}</b></span>
@@ -453,14 +495,24 @@ with row1_col1:
                     unsafe_allow_html=True,
                 )
             with col_act2:
-                # Codificación utf-8-sig para compatibilidad con Excel (muestra correctamente caracteres como 'Ñ')
-                csv_data = df_resumen.to_csv(index=False).encode("utf-8-sig")
+                # Formato plano detallado con total al pie tal como se visualiza en la tabla
+                df_plano_export = df_resumen.copy()
+                total_plano_row = pd.DataFrame([{
+                    "CICLO": "",
+                    "LOCAL": "",
+                    "TURNO": "TOTAL GENERAL",
+                    "MATRICULADOS": total_matriculados_tabla,
+                }])
+                df_plano_export = pd.concat([df_plano_export, total_plano_row], ignore_index=True)
+                csv_plano = df_plano_export.to_csv(index=False).encode("utf-8-sig")
+
                 st.download_button(
-                    label="📥 Exportar CSV",
-                    data=csv_data,
-                    file_name=f"matriculados_ciclo_local_turno_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                    label="📥 Exportar Matriz",
+                    data=csv_plano,
+                    file_name=f"matriculados_detalle_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
                     mime="text/csv",
                     use_container_width=True,
+                    help="Descargar listado detallado con Ciclo, Sede, Turno y Matriculados",
                 )
         else:
             st.info("No se encontraron registros con los filtros seleccionados.")
@@ -525,7 +577,7 @@ with row1_col2:
                 yaxis_title="",
                 margin=dict(l=10, r=35, t=30, b=10),
                 yaxis=dict(tickfont=dict(size=11, color="#F8FAFC" if is_dark else "#0F172A", family="Plus Jakarta Sans", weight="bold")),
-                xaxis=dict(range=[0, max(max_total * 1.14, max_total + 2)], showgrid=True, gridcolor="rgba(255, 255, 255, 0.08)" if is_dark else "#F1F5F9", tickfont=dict(size=10.5, color="#F1F5F9" if is_dark else "#334155", family="Plus Jakarta Sans")),
+                xaxis=dict(range=[0, max(max_total * 1.14, max_total + 2)], showgrid=True, gridcolor="rgba(255, 255, 255, 0.08)" if is_dark else "#E2E8F0", tickfont=dict(size=10.5, color="#CBD5E1" if is_dark else "#475569", family="Plus Jakarta Sans")),
             )
             st.plotly_chart(fig_cruce, use_container_width=True, config={"displayModeBar": False})
 
@@ -541,7 +593,7 @@ with row2_col1:
             <div class="chart-header-row">
                 <div>
                     <div class="chart-title-main">Distribución por Turno</div>
-                    <div class="chart-desc">Proporción de matriculados Mañana vs Tarde</div>
+                    <div class="chart-desc">Proporción porcentual y distribución por turno</div>
                 </div>
                 <span class="chart-tag">Proporción</span>
             </div>
@@ -572,7 +624,7 @@ with row2_col1:
                 margin=dict(l=10, r=10, t=20, b=30),
                 annotations=[
                     dict(
-                        text=f"<span style='font-size:1.85rem; font-weight:800; color:{'#F8FAFC' if is_dark else '#0F172A'}; font-family:Outfit;'>{total_turno:,}</span><br><span style='font-size:0.75rem; color:{'#CBD5E1' if is_dark else '#64748B'}; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;'>Total</span>",
+                        text=f"<span style='font-size:2rem; font-weight:800; color:{'#F8FAFC' if is_dark else '#0F172A'}; font-family:Outfit;'>{total_turno:,}</span><br><span style='font-size:0.75rem; color:{'#CBD5E1' if is_dark else '#475569'}; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;'>Total</span>",
                         x=0.5, y=0.5,
                         font_size=13,
                         showarrow=False,
@@ -588,7 +640,7 @@ with row2_col2:
             <div class="chart-header-row">
                 <div>
                     <div class="chart-title-main">Matriculados por Área Académica</div>
-                    <div class="chart-desc">Distribución por áreas del conocimiento (A a E)</div>
+                    <div class="chart-desc">Postulantes agrupados por área de conocimiento institucional</div>
                 </div>
                 <span class="chart-tag">Áreas</span>
             </div>
@@ -597,21 +649,25 @@ with row2_col2:
         )
         df_area = queries.get_matriculados_por_area(current_filters)
         if not df_area.empty:
-            df_area["AREA_LABEL"] = df_area["AREA"].apply(lambda a: area_labels.get(a, f"Área {a}"))
+            df_area_sorted = df_area.sort_values(by="total", ascending=True).copy()
+            df_area_sorted["AREA_LABEL"] = df_area_sorted["AREA"].apply(lambda a: AREA_LABELS.get(a, f"Área {a}"))
             fig_area = px.bar(
-                df_area,
-                x="AREA",
-                y="total",
+                df_area_sorted,
+                x="total",
+                y="AREA_LABEL",
+                orientation="h",
                 text="total",
                 color="AREA",
                 color_discrete_map=AREA_COLORS,
-                hover_data={"AREA_LABEL": True, "AREA": False, "total": ":,"},
+                hover_data={"AREA_LABEL": False, "AREA": False, "total": ":,"},
             )
+            max_area = int(df_area_sorted["total"].max()) if not df_area_sorted.empty else 0
             fig_area.update_traces(
                 texttemplate="%{text:,}",
                 textposition="outside",
+                cliponaxis=False,
                 textfont=dict(size=11, color="#F8FAFC" if is_dark else "#0F172A", family="Plus Jakarta Sans", weight="bold"),
-                hovertemplate="<b>%{customdata[0]}</b><br>Matriculados: <b>%{y:,}</b><extra></extra>",
+                hovertemplate="<b>%{y}</b><br>Matriculados: <b>%{x:,}</b><extra></extra>",
                 marker=dict(line=dict(width=0)),
             )
             fig_area = apply_plotly_theme(fig_area, height=400, is_dark=is_dark)
@@ -619,9 +675,9 @@ with row2_col2:
                 showlegend=False,
                 xaxis_title="",
                 yaxis_title="",
-                margin=dict(l=10, r=10, t=10, b=10),
-                xaxis=dict(tickfont=dict(size=11.5, color="#F8FAFC" if is_dark else "#0F172A", family="Plus Jakarta Sans", weight="bold")),
-                yaxis=dict(tickfont=dict(size=10.5, color="#F1F5F9" if is_dark else "#334155", family="Plus Jakarta Sans")),
+                margin=dict(l=10, r=40, t=10, b=10),
+                xaxis=dict(range=[0, max(max_area * 1.15, max_area + 2)], tickfont=dict(size=10.5, color="#CBD5E1" if is_dark else "#475569", family="Plus Jakarta Sans")),
+                yaxis=dict(tickfont=dict(size=11, color="#F8FAFC" if is_dark else "#0F172A", family="Plus Jakarta Sans", weight="bold")),
             )
             st.plotly_chart(fig_area, use_container_width=True, config={"displayModeBar": False})
 
@@ -675,21 +731,43 @@ with st.container(border=True):
             )
         )
 
+        # Identificar y destacar el hito del día récord de matrículas (Delight analítico)
+        if not df_evolucion.empty and df_evolucion["total"].max() > 0:
+            idx_max = df_evolucion["total"].idxmax()
+            pico_row = df_evolucion.loc[idx_max]
+            fig_evolucion.add_annotation(
+                x=pico_row["fecha_matricula"],
+                y=pico_row["total"],
+                text=f"⭐ Pico: {int(pico_row['total']):,} inscritos",
+                showarrow=True,
+                arrowhead=2,
+                arrowsize=1,
+                arrowwidth=1.5,
+                arrowcolor="#38BDF8" if is_dark else "#1D4ED8",
+                ax=0,
+                ay=-26,
+                bgcolor="rgba(15, 23, 42, 0.85)" if is_dark else "rgba(255, 255, 255, 0.95)",
+                bordercolor="rgba(56, 189, 248, 0.45)" if is_dark else "rgba(29, 78, 216, 0.35)",
+                borderwidth=1,
+                borderpad=4,
+                font=dict(size=10, color="#38BDF8" if is_dark else "#1D4ED8", family="Plus Jakarta Sans", weight="bold"),
+            )
+
         fig_evolucion = apply_plotly_theme(fig_evolucion, height=360, is_dark=is_dark)
         fig_evolucion.update_layout(
-            yaxis=dict(title="Diario", title_font=dict(size=11, color="#F8FAFC" if is_dark else "#0F172A"), tickfont=dict(size=10.5, color="#F1F5F9" if is_dark else "#334155")),
+            yaxis=dict(title="Diario", title_font=dict(size=11, color="#F8FAFC" if is_dark else "#0F172A"), tickfont=dict(size=10.5, color="#CBD5E1" if is_dark else "#475569")),
             yaxis2=dict(
                 title="Acumulado",
                 title_font=dict(size=11, color="#F8FAFC" if is_dark else "#0F172A"),
-                tickfont=dict(size=10.5, color="#F1F5F9" if is_dark else "#334155"),
+                tickfont=dict(size=10.5, color="#CBD5E1" if is_dark else "#475569"),
                 overlaying="y",
                 side="right",
                 showgrid=False,
             ),
-            xaxis=dict(title="", tickformat="%d %b", tickfont=dict(size=10.5, color="#F1F5F9" if is_dark else "#334155")),
+            xaxis=dict(title="", tickformat="%d %b", tickfont=dict(size=10.5, color="#CBD5E1" if is_dark else "#475569")),
             hovermode="x unified",
             legend=dict(orientation="h", yanchor="bottom", y=1.03, xanchor="right", x=1, font=dict(color="#F8FAFC" if is_dark else "#0F172A")),
-            margin=dict(l=10, r=10, t=25, b=15),
+            margin=dict(l=10, r=10, t=32, b=15),
         )
         st.plotly_chart(fig_evolucion, use_container_width=True, config={"displayModeBar": False})
 
@@ -709,9 +787,11 @@ with st.container(border=True):
         """,
         unsafe_allow_html=True,
     )
-    df_carreras = queries.get_top_carreras(current_filters, limit=15)
-    if not df_carreras.empty:
+    df_todas_carreras = queries.get_top_carreras(current_filters, limit=100)
+    if not df_todas_carreras.empty:
+        df_carreras = df_todas_carreras.head(15).copy()
         df_carreras_sorted = df_carreras.sort_values(by="total", ascending=True).copy()
+        max_carreras = int(df_carreras_sorted["total"].max()) if not df_carreras_sorted.empty else 0
         
         # Formato de barra con escala cromática adaptativa
         c_scale = [[0, "#1E3A8A"], [0.5, "#3B82F6"], [1, "#60A5FA"]] if is_dark else [[0, "#93C5FD"], [0.5, "#3B82F6"], [1, "#1D4ED8"]]
@@ -727,6 +807,7 @@ with st.container(border=True):
         fig_carreras.update_traces(
             texttemplate="%{text:,}",
             textposition="outside",
+            cliponaxis=False,
             textfont=dict(size=11, color="#F8FAFC" if is_dark else "#0F172A", family="Plus Jakarta Sans", weight="bold"),
             hovertemplate="<b>%{y}</b><br>Matriculados: <b>%{x:,}</b><extra></extra>",
             marker=dict(line=dict(width=0)),
@@ -739,9 +820,43 @@ with st.container(border=True):
             yaxis_title="",
             margin=dict(l=10, r=40, t=10, b=10),
             yaxis=dict(tickfont=dict(size=11, color="#F8FAFC" if is_dark else "#0F172A", family="Plus Jakarta Sans", weight="bold")),
-            xaxis=dict(showgrid=True, gridcolor="rgba(255, 255, 255, 0.08)" if is_dark else "#F1F5F9", tickfont=dict(size=10.5, color="#F1F5F9" if is_dark else "#334155", family="Plus Jakarta Sans")),
+            xaxis=dict(range=[0, max(max_carreras * 1.15, max_carreras + 2)], showgrid=True, gridcolor="rgba(255, 255, 255, 0.08)" if is_dark else "#E2E8F0", tickfont=dict(size=10.5, color="#CBD5E1" if is_dark else "#475569", family="Plus Jakarta Sans")),
         )
         st.plotly_chart(fig_carreras, use_container_width=True, config={"displayModeBar": False})
+
+        # Barra de acciones y descarga para ranking de carreras
+        col_car_info, col_car_btn = st.columns([1.5, 1])
+        with col_car_info:
+            total_top15 = int(df_carreras["total"].sum())
+            st.markdown(
+                f"""
+                <div style="display: flex; align-items: center; gap: 8px; padding: 0.35rem 0; font-size: 0.875rem; color: var(--text-secondary); flex-wrap: wrap;">
+                    <span>🏆 <b>Top 15 Programas</b></span>
+                    <span>•</span>
+                    <span>Subtotal Top 15: <b style="color: var(--text-primary); font-size: 0.95rem; font-variant-numeric: tabular-nums;">{total_top15:,}</b></span>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        with col_car_btn:
+            df_carreras_export = df_todas_carreras.copy()
+            df_carreras_export["RANKING"] = range(1, len(df_carreras_export) + 1)
+            total_carreras_sum = df_carreras_export["total"].sum()
+            if total_carreras_sum > 0:
+                df_carreras_export["PORCENTAJE"] = (df_carreras_export["total"] / total_carreras_sum * 100).round(2).astype(str) + "%"
+            else:
+                df_carreras_export["PORCENTAJE"] = "0.00%"
+            df_carreras_export = df_carreras_export[["RANKING", "CARRERA", "total", "PORCENTAJE"]]
+            df_carreras_export.rename(columns={"total": "MATRICULADOS"}, inplace=True)
+            csv_carreras = df_carreras_export.to_csv(index=False).encode("utf-8-sig")
+            st.download_button(
+                label="📥 Exportar Ranking de Carreras (CSV)",
+                data=csv_carreras,
+                file_name=f"ranking_carreras_matricula_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                mime="text/csv",
+                use_container_width=True,
+                help="Descargar listado con todas las carreras ordenadas por demanda de postulantes",
+            )
 
 
 # 11. Pie de Página de Alto Nivel

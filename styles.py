@@ -47,6 +47,15 @@ AREA_COLORS = {
     "E": "#7C3AED",  # Humanidades y Ciencias Sociales (Violeta)
 }
 
+AREA_LABELS = {
+    "A": "Área A: Ciencias de la Salud",
+    "B": "Área B: Ciencias Básicas",
+    "C": "Área C: Ingenierías",
+    "D": "Área D: Ciencias Económicas y Gestión",
+    "E": "Área E: Humanidades y Ciencias Sociales",
+}
+
+
 
 def _inject_container_js(
     card_bg: str,
@@ -172,6 +181,16 @@ def inject_custom_css(theme: str = "light"):
         table_border = "rgba(255, 255, 255, 0.12)"
         table_row_hover = "rgba(255, 255, 255, 0.04)"
         table_tfoot_border = "#38BDF8"
+        selection_bg = "rgba(37, 99, 235, 0.45)"
+        selection_color = "#FFFFFF"
+        scrollbar_track = "#0B0F19"
+        scrollbar_thumb = "rgba(255, 255, 255, 0.20)"
+        scrollbar_thumb_hover = "rgba(96, 165, 250, 0.50)"
+        focus_ring = "#3B82F6"
+        caret_color = "#60A5FA"
+        popover_shadow = "0 12px 32px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4)"
+        button_shadow = "0 1px 3px rgba(0, 0, 0, 0.4)"
+        button_shadow_hover = "0 4px 12px rgba(0, 0, 0, 0.55)"
     else:
         app_bg = "#F8FAFC"
         sidebar_bg = "#FFFFFF"
@@ -181,8 +200,8 @@ def inject_custom_css(theme: str = "light"):
         card_shadow = "0 1px 3px rgba(15, 23, 42, 0.02), 0 4px 14px -2px rgba(15, 23, 42, 0.04)"
         card_shadow_hover = "0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.03)"
         text_primary = "#0F172A"
-        text_secondary = "#64748B"
-        text_muted = "#94A3B8"
+        text_secondary = "#475569"
+        text_muted = "#64748B"
         divider_color = "#E2E8F0"
         bezel_outer_bg = "#FFFFFF"
         bezel_outer_border = "rgba(226, 232, 240, 0.9)"
@@ -213,6 +232,16 @@ def inject_custom_css(theme: str = "light"):
         table_border = "#CBD5E1"
         table_row_hover = "#F8FAFC"
         table_tfoot_border = "#0F172A"
+        selection_bg = "rgba(147, 197, 253, 0.55)"
+        selection_color = "#0F172A"
+        scrollbar_track = "#F8FAFC"
+        scrollbar_thumb = "rgba(15, 23, 42, 0.18)"
+        scrollbar_thumb_hover = "rgba(37, 99, 235, 0.45)"
+        focus_ring = "#2563EB"
+        caret_color = "#1D4ED8"
+        popover_shadow = "0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 4px 10px -2px rgba(15, 23, 42, 0.04)"
+        button_shadow = "0 1px 3px rgba(15, 23, 42, 0.06)"
+        button_shadow_hover = "0 4px 12px rgba(15, 23, 42, 0.10)"
 
     css = f"""
     <style>
@@ -263,6 +292,57 @@ def inject_custom_css(theme: str = "light"):
         --table-border: {table_border};
         --table-row-hover: {table_row_hover};
         --table-tfoot-border: {table_tfoot_border};
+        --selection-bg: {selection_bg};
+        --selection-color: {selection_color};
+        --scrollbar-track: {scrollbar_track};
+        --scrollbar-thumb: {scrollbar_thumb};
+        --scrollbar-thumb-hover: {scrollbar_thumb_hover};
+        --focus-ring: {focus_ring};
+        --caret-color: {caret_color};
+        --popover-shadow: {popover_shadow};
+        --button-shadow: {button_shadow};
+        --button-shadow-hover: {button_shadow_hover};
+    }}
+
+    /* Tratamiento integral de superficies del navegador (Craft Floor) */
+    ::selection {{
+        background: var(--selection-bg) !important;
+        color: var(--selection-color) !important;
+    }}
+
+    * {{
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    }}
+
+    ::-webkit-scrollbar {{
+        width: 7px;
+        height: 7px;
+    }}
+
+    ::-webkit-scrollbar-track {{
+        background: var(--scrollbar-track);
+    }}
+
+    ::-webkit-scrollbar-thumb {{
+        background: var(--scrollbar-thumb);
+        border-radius: 9999px;
+    }}
+
+    ::-webkit-scrollbar-thumb:hover {{
+        background: var(--scrollbar-thumb-hover);
+    }}
+
+    input:not([role="combobox"]), textarea, [contenteditable] {{
+        caret-color: var(--caret-color) !important;
+    }}
+
+    button:focus-visible,
+    a:focus-visible,
+    .stButton > button:focus-visible,
+    div[data-testid="stRadio"] label:focus-visible {{
+        outline: 2px solid var(--focus-ring) !important;
+        outline-offset: 2px !important;
     }}
 
 
@@ -318,7 +398,7 @@ def inject_custom_css(theme: str = "light"):
 
     .header-title {{
         font-family: var(--font-display);
-        font-size: 1.95rem;
+        font-size: clamp(2rem, 3.5vw, 2.75rem);
         font-weight: 700;
         letter-spacing: -0.035em;
         color: var(--text-primary);
@@ -327,7 +407,7 @@ def inject_custom_css(theme: str = "light"):
     }}
 
     .header-subtitle {{
-        font-size: 0.92rem;
+        font-size: 0.925rem;
         color: var(--text-secondary);
         margin-top: 0.25rem;
         letter-spacing: -0.01em;
@@ -343,7 +423,7 @@ def inject_custom_css(theme: str = "light"):
         padding: 6px 14px;
         border-radius: 9999px;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-        font-size: 0.82rem;
+        font-size: 0.875rem;
         font-weight: 600;
         color: var(--live-badge-text);
     }}
@@ -354,7 +434,7 @@ def inject_custom_css(theme: str = "light"):
         background-color: #10B981;
         border-radius: 50%;
         box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-        animation: pulse-ring 2s infinite var(--ease-out-spring);
+        animation: pulse-ring 2s infinite cubic-bezier(0.25, 1, 0.5, 1);
     }}
 
     .pulse-demo {{
@@ -363,13 +443,37 @@ def inject_custom_css(theme: str = "light"):
         background-color: #F59E0B;
         border-radius: 50%;
         box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-        animation: pulse-ring 2s infinite var(--ease-out-spring);
+        animation: pulse-ring 2s infinite cubic-bezier(0.25, 1, 0.5, 1);
     }}
 
     @keyframes pulse-ring {{
         0% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6); }}
         70% {{ transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }}
         100% {{ transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }}
+    }}
+
+    /* Soporte de Accesibilidad: Sensibilidad al movimiento (WCAG 2.1 AA) */
+    @media (prefers-reduced-motion: reduce) {{
+        .pulse-live, .pulse-demo {{
+            animation: none !important;
+            box-shadow: none !important;
+        }}
+        .bezel-outer {{
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+        }}
+        .bezel-outer:hover {{
+            transform: none !important;
+        }}
+        .kpi-accent-glow {{
+            transition: opacity 0.15s ease !important;
+        }}
+        .bezel-outer:hover .kpi-accent-glow {{
+            transform: none !important;
+        }}
+        button, a, .stButton > button {{
+            transition: background-color 0.15s ease, border-color 0.15s ease !important;
+            transform: none !important;
+        }}
     }}
 
     /* ------------------------------------------------------------- */
@@ -415,6 +519,12 @@ def inject_custom_css(theme: str = "light"):
         filter: blur(28px);
         opacity: 0.16;
         pointer-events: none;
+        transition: opacity 0.35s ease, transform 0.35s ease;
+    }}
+
+    .bezel-outer:hover .kpi-accent-glow {{
+        opacity: 0.38;
+        transform: scale(1.18);
     }}
 
     .kpi-top-row {{
@@ -425,7 +535,7 @@ def inject_custom_css(theme: str = "light"):
     }}
 
     .kpi-label {{
-        font-size: 0.74rem;
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.08em;
@@ -435,17 +545,17 @@ def inject_custom_css(theme: str = "light"):
     .kpi-icon-pill {{
         width: 34px;
         height: 34px;
-        border-radius: 9px;
+        border-radius: 10px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.15rem;
+        font-size: 1.1rem;
         border: 1px solid rgba(255, 255, 255, 0.05);
     }}
 
     .kpi-number {{
         font-family: var(--font-display);
-        font-size: 2.25rem;
+        font-size: clamp(2rem, 3.5vw, 2.75rem);
         font-weight: 700;
         letter-spacing: -0.04em;
         color: var(--text-primary);
@@ -455,7 +565,7 @@ def inject_custom_css(theme: str = "light"):
     }}
 
     .kpi-foot {{
-        font-size: 0.78rem;
+        font-size: 0.75rem;
         font-weight: 500;
         color: var(--text-secondary);
         display: flex;
@@ -531,7 +641,7 @@ def inject_custom_css(theme: str = "light"):
 
     .chart-title-main {{
         font-family: var(--font-display);
-        font-size: 1.08rem;
+        font-size: 1.1rem;
         font-weight: 700;
         letter-spacing: -0.02em;
         color: var(--text-primary);
@@ -539,14 +649,14 @@ def inject_custom_css(theme: str = "light"):
     }}
 
     .chart-desc {{
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         color: var(--text-secondary);
         margin-top: 3px;
         letter-spacing: -0.005em;
     }}
 
     .chart-tag {{
-        font-size: 0.68rem;
+        font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.06em;
@@ -596,18 +706,15 @@ def inject_custom_css(theme: str = "light"):
     }}
 
     .identity-info-name {{
-        font-size: 0.88rem;
+        font-size: 0.875rem;
         font-weight: 700;
         color: var(--text-primary);
         line-height: 1.2;
     }}
 
     .identity-info-sub {{
-        font-size: 0.74rem;
+        font-size: 0.75rem;
         color: var(--text-secondary);
-        display: flex;
-        align-items: center;
-        gap: 4px;
     }}
 
     /* ------------------------------------------------------------- */
@@ -623,7 +730,7 @@ def inject_custom_css(theme: str = "light"):
     section[data-testid="stSidebar"] label p {{
         color: var(--text-primary) !important;
         font-weight: 600 !important;
-        font-size: 0.82rem !important;
+        font-size: 0.875rem !important;
         letter-spacing: -0.01em !important;
     }}
 
@@ -634,7 +741,25 @@ def inject_custom_css(theme: str = "light"):
         background-color: var(--input-bg) !important;
         color: var(--input-text) !important;
         border: 1px solid var(--input-border) !important;
-        border-radius: 9px !important;
+        border-radius: 10px !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    }}
+
+    .stSelectbox div[data-baseweb="select"] > div:focus-within,
+    .stMultiSelect div[data-baseweb="select"] > div:focus-within,
+    div[data-baseweb="select"] > div:focus-within {{
+        border-color: var(--card-border-hover) !important;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25) !important;
+    }}
+
+    /* Eliminar contorno azul y cursor pegado en el input interno de BaseWeb */
+    div[data-baseweb="select"] input,
+    div[data-baseweb="select"] input:focus,
+    div[data-baseweb="select"] input:focus-visible {{
+        outline: none !important;
+        box-shadow: none !important;
+        border: none !important;
+        caret-color: transparent !important;
     }}
 
     .stSelectbox div[data-baseweb="select"] [data-testid="stMarkdownContainer"] p,
@@ -680,7 +805,7 @@ def inject_custom_css(theme: str = "light"):
         color: var(--text-primary) !important;
         border: 1px solid var(--input-border) !important;
         border-radius: 12px !important;
-        box-shadow: 0 10px 30px -4px rgba(0, 0, 0, 0.7), 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+        box-shadow: var(--popover-shadow) !important;
         overflow: hidden !important;
     }}
 
@@ -690,7 +815,7 @@ def inject_custom_css(theme: str = "light"):
     li[role="option"] {{
         background-color: var(--input-bg) !important;
         color: var(--text-primary) !important;
-        font-size: 0.84rem !important;
+        font-size: 0.875rem !important;
         font-weight: 500 !important;
         padding: 8px 14px !important;
         cursor: pointer !important;
@@ -723,7 +848,7 @@ def inject_custom_css(theme: str = "light"):
     div[data-testid="stDateInput"] div[data-baseweb="base-input"] {{
         background-color: var(--input-bg) !important;
         border: 1px solid var(--input-border) !important;
-        border-radius: 9px !important;
+        border-radius: 10px !important;
         overflow: hidden !important;
         box-shadow: none !important;
     }}
@@ -734,7 +859,7 @@ def inject_custom_css(theme: str = "light"):
         color: var(--input-text) !important;
         border: none !important;
         box-shadow: none !important;
-        font-size: 0.86rem !important;
+        font-size: 0.875rem !important;
         font-weight: 500 !important;
         font-variant-numeric: tabular-nums !important;
     }}
@@ -757,11 +882,11 @@ def inject_custom_css(theme: str = "light"):
     }}
 
     div[data-testid="stRadio"] label {{
-        font-size: 0.82rem !important;
+        font-size: 0.875rem !important;
         font-weight: 600 !important;
         color: var(--text-primary) !important;
         padding: 4px 10px !important;
-        border-radius: 7px !important;
+        border-radius: 6px !important;
         cursor: pointer !important;
         transition: all 0.2s ease !important;
     }}
@@ -791,10 +916,10 @@ def inject_custom_css(theme: str = "light"):
         border: 1px solid var(--button-border) !important;
         border-radius: 10px !important;
         font-weight: 600 !important;
-        font-size: 0.84rem !important;
+        font-size: 0.875rem !important;
         letter-spacing: -0.01em !important;
         padding: 0.45rem 1rem !important;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15) !important;
+        box-shadow: var(--button-shadow) !important;
         transition: all 0.2s var(--ease-out-spring) !important;
     }}
 
@@ -818,7 +943,7 @@ def inject_custom_css(theme: str = "light"):
         border-color: var(--card-border-hover) !important;
         color: var(--button-color) !important;
         transform: translateY(-1px) !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+        box-shadow: var(--button-shadow-hover) !important;
     }}
 
     button:active,
@@ -843,7 +968,7 @@ def inject_custom_css(theme: str = "light"):
         width: 100%;
         border-collapse: collapse;
         font-family: var(--font-sans);
-        font-size: 0.88rem;
+        font-size: 0.875rem;
         line-height: 1.45;
         text-align: left;
     }}
@@ -852,7 +977,7 @@ def inject_custom_css(theme: str = "light"):
         background-color: var(--table-th-bg);
         color: var(--table-th-color);
         font-weight: 700;
-        font-size: 0.82rem;
+        font-size: 0.75rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
         padding: 10px 16px;
@@ -900,7 +1025,7 @@ def inject_custom_css(theme: str = "light"):
 
     .executive-table tfoot td.total-label {{
         text-align: right;
-        font-size: 0.88rem;
+        font-size: 0.875rem;
         text-transform: uppercase;
         letter-spacing: 0.06em;
         color: var(--text-primary);
@@ -909,7 +1034,7 @@ def inject_custom_css(theme: str = "light"):
 
     .executive-table tfoot td.total-value {{
         text-align: right;
-        font-size: 1.18rem;
+        font-size: 1.1rem;
         font-weight: 800;
         font-family: var(--font-display);
         font-variant-numeric: tabular-nums;
@@ -917,11 +1042,84 @@ def inject_custom_css(theme: str = "light"):
         border-right: none;
     }}
 
+    /* ------------------------------------------------------------- */
+    /* SISTEMA RESPONSIVO Y ADAPTATIVO (impeccable adapt)           */
+    /* ------------------------------------------------------------- */
+    
+    /* Momentum scroll en tablas para dispositivos móviles y tablets */
+    .table-container-responsive {{
+        -webkit-overflow-scrolling: touch;
+    }}
+
+    /* Tablets y Pantallas Compactas (<= 992px) */
+    @media (max-width: 992px) {{
+        .block-container {{
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+            padding-top: 1rem !important;
+        }}
+        .header-title {{
+            font-size: 1.35rem !important;
+        }}
+        .bezel-inner {{
+            padding: 0.95rem 1rem !important;
+        }}
+        .kpi-number {{
+            font-size: 2rem !important;
+        }}
+    }}
+
+    /* Móviles y Pantallas Angostas (<= 768px) */
+    @media (max-width: 768px) {{
+        .block-container {{
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-top: 0.75rem !important;
+        }}
+        .header-title {{
+            font-size: 1.1rem !important;
+            letter-spacing: -0.02em !important;
+        }}
+        .header-subtitle {{
+            font-size: 0.75rem !important;
+            line-height: 1.35 !important;
+        }}
+        .brand-eyebrow {{
+            font-size: 0.75rem !important;
+            padding: 3px 8px !important;
+        }}
+        .bezel-outer {{
+            margin-bottom: 0.5rem;
+        }}
+        .chart-frame,
+        div[data-testid="stVerticalBlockBorderWrapper"] {{
+            padding: 0.9rem 1rem !important;
+            border-radius: 14px !important;
+        }}
+        .executive-table thead th,
+        .executive-table tbody td {{
+            padding: 8px 10px !important;
+            font-size: 0.75rem !important;
+        }}
+    }}
+
+    /* Dispositivos Táctiles (Coarse Pointer: Touch targets 44x44px mínimos) */
+    @media (pointer: coarse) {{
+        button,
+        button[kind="secondary"],
+        button[kind="primary"],
+        .stButton > button,
+        section[data-testid="stSidebar"] button {{
+            min-height: 44px !important;
+            padding: 0.6rem 1.1rem !important;
+        }}
+    }}
+
     /* Pie de página sutil */
     .footer-minimal {{
         text-align: center;
         color: var(--text-muted);
-        font-size: 0.76rem;
+        font-size: 0.75rem;
         margin-top: 2.5rem;
         padding-top: 1.25rem;
         border-top: 1px solid var(--divider-color);
@@ -942,30 +1140,45 @@ def create_kpi_card_html(
     icon: str,
     accent_color: str = "#1D4ED8",
     icon_bg: str = "rgba(29, 78, 216, 0.08)",
+    badge: str = None,
+    badge_bg: str = "rgba(5, 150, 105, 0.12)",
+    badge_color: str = "#059669",
 ) -> str:
     """
     Genera el HTML con arquitectura 'Double-Bezel' (Doppelrand) de alta fidelidad,
-    halo ambiental y números con tipografía Display, adaptado a tokens CSS.
+    halo ambiental, micro-badge opcional y números con tipografía Display.
     """
-    return f"""
-    <div class="bezel-outer">
-        <div class="bezel-inner">
-            <div class="kpi-accent-glow" style="background-color: {accent_color};"></div>
-            <div>
-                <div class="kpi-top-row">
-                    <span class="kpi-label">{title}</span>
-                    <div class="kpi-icon-pill" style="background-color: {icon_bg}; color: {accent_color};">
-                        {icon}
-                    </div>
-                </div>
-                <div class="kpi-number">{value}</div>
-            </div>
-            <div class="kpi-foot">
-                {subtitle}
-            </div>
-        </div>
-    </div>
-    """
+    title_escaped = html.escape(str(title))
+    val_escaped = html.escape(str(value))
+    sub_escaped = html.escape(str(subtitle))
+    
+    badge_html = ""
+    if badge:
+        badge_escaped = html.escape(str(badge))
+        badge_html = (
+            f'<span style="background: {badge_bg}; color: {badge_color}; '
+            f'padding: 2px 7px; border-radius: 9999px; font-size: 0.75rem; '
+            f'font-weight: 700; letter-spacing: 0.02em; white-space: nowrap;">'
+            f'{badge_escaped}</span>'
+        )
+
+    return (
+        f'<div class="bezel-outer" role="region" aria-label="Métrica {title_escaped}: {val_escaped}">'
+        f'<div class="bezel-inner">'
+        f'<div class="kpi-accent-glow" style="background-color: {accent_color};" aria-hidden="true"></div>'
+        f'<div>'
+        f'<div class="kpi-top-row">'
+        f'<span class="kpi-label">{title_escaped}</span>'
+        f'<div class="kpi-icon-pill" style="background-color: {icon_bg}; color: {accent_color};" aria-hidden="true">{icon}</div>'
+        f'</div>'
+        f'<div class="kpi-number">{val_escaped}</div>'
+        f'</div>'
+        f'<div class="kpi-foot" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">'
+        f'<span>{sub_escaped}</span>{badge_html}'
+        f'</div>'
+        f'</div>'
+        f'</div>'
+    )
 
 
 def create_executive_table_html(df: pd.DataFrame, is_dark: bool = False) -> str:
@@ -1002,31 +1215,29 @@ def create_executive_table_html(df: pd.DataFrame, is_dark: bool = False) -> str:
             f"</tr>"
         )
 
-    body_content = "\n".join(rows_html)
+    body_content = "".join(rows_html)
 
-    return f"""
-    <div class="table-container-responsive">
-        <table class="executive-table">
-            <thead>
-                <tr>
-                    <th style="text-align: left;">CICLO</th>
-                    <th style="text-align: left;">LOCAL</th>
-                    <th style="text-align: left;">TURNO</th>
-                    <th style="text-align: right;">MATRICULADOS</th>
-                </tr>
-            </thead>
-            <tbody>
-                {body_content}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="3" class="total-label">TOTAL GENERAL</td>
-                    <td class="total-value">{total_general:,}</td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-    """
+    return (
+        '<div class="table-container-responsive">'
+        '<table class="executive-table">'
+        '<thead>'
+        '<tr>'
+        '<th style="text-align: left;">CICLO</th>'
+        '<th style="text-align: left;">LOCAL</th>'
+        '<th style="text-align: left;">TURNO</th>'
+        '<th style="text-align: right;">MATRICULADOS</th>'
+        '</tr>'
+        '</thead>'
+        f'<tbody>{body_content}</tbody>'
+        '<tfoot>'
+        '<tr>'
+        '<td colspan="3" class="total-label">TOTAL GENERAL</td>'
+        f'<td class="total-value">{total_general:,}</td>'
+        '</tr>'
+        '</tfoot>'
+        '</table>'
+        '</div>'
+    )
 
 
 
@@ -1039,8 +1250,8 @@ def apply_plotly_theme(fig: go.Figure, height: int = 380, is_dark: bool = False)
     - Fondos transparentes integrados con el marco del contenedor
     """
     text_color = "#F8FAFC" if is_dark else "#0F172A"
-    tick_color = "#F1F5F9" if is_dark else "#334155"
-    grid_color = "rgba(255, 255, 255, 0.08)" if is_dark else "#F1F5F9"
+    tick_color = "#CBD5E1" if is_dark else "#475569"
+    grid_color = "rgba(255, 255, 255, 0.08)" if is_dark else "#E2E8F0"
     line_color = "rgba(255, 255, 255, 0.22)" if is_dark else "#CBD5E1"
     hover_bg = "#1E293B" if is_dark else "#0F172A"
     hover_border = "rgba(255, 255, 255, 0.25)" if is_dark else "rgba(255, 255, 255, 0.12)"

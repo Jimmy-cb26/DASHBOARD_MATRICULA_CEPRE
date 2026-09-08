@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-08T13:31:00Z",
+  "title": "Design System: Dashboard de Métricas de Matrícula",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Azul Zafiro Institucional", "canonical": "#1E40AF", "tonalRamp": ["#0D1B46", "#142866", "#1E40AF", "#2563EB", "#3B82F6", "#60A5FA", "#93C5FD", "#DBEAFE"] },
+      "secondary": { "role": "secondary", "displayName": "Cerúleo Refinado", "canonical": "#0284C7", "tonalRamp": ["#082F49", "#0C4A6E", "#0284C7", "#0EA5E9", "#38BDF8", "#7DD3FC", "#BAE6FD", "#E0F2FE"] },
+      "amber": { "role": "tertiary", "displayName": "Ámbar Ocre (Turno Tarde / Área D)", "canonical": "#D97706", "tonalRamp": ["#451A03", "#78350F", "#B45309", "#D97706", "#F59E0B", "#FBBF24", "#FCD34D", "#FEF3C7"] },
+      "crimson": { "role": "tertiary", "displayName": "Rosa Carmesí (Área A)", "canonical": "#E11D48", "tonalRamp": ["#4C0519", "#881337", "#BE123C", "#E11D48", "#F43F5E", "#FB7185", "#FDA4AF", "#FFE4E6"] },
+      "emerald": { "role": "tertiary", "displayName": "Esmeralda Profundo (Área B)", "canonical": "#059669", "tonalRamp": ["#022C22", "#064E3B", "#047857", "#059669", "#10B981", "#34D399", "#6EE7B7", "#D1FAE5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display (Outfit)", "purpose": "Métricas magnas de KPI y totales institucionales con números tabulares." },
+      "headline": { "displayName": "Headline (Outfit)", "purpose": "Títulos de bloques analíticos principales." },
+      "title": { "displayName": "Title (Outfit)", "purpose": "Encabezados de gráficos y tarjetas enmarcadas." },
+      "body": { "displayName": "Body (Plus Jakarta Sans)", "purpose": "Texto general, nombres de carreras y descripciones operativas." },
+      "label": { "displayName": "Label / Eyebrow (Plus Jakarta Sans)", "purpose": "Badges de categoría y cabeceras de tablas con espaciado ensanchado." }
+    },
+    "shadows": [
+      { "name": "ambient-bezel", "value": "0 4px 16px rgba(0, 0, 0, 0.55)", "purpose": "Sostiene la tarjeta suspendida sobre el lienzo oscuro." },
+      { "name": "specular-inset", "value": "inset 0 1px 0 rgba(255, 255, 255, 0.08)", "purpose": "Bisel de luz especular en el borde superior interior." },
+      { "name": "hover-luminescence", "value": "0 8px 28px rgba(0, 0, 0, 0.7), 0 0 0 2px rgba(96, 165, 250, 0.50)", "purpose": "Halo de interacción al posar el cursor sobre tarjetas." },
+      { "name": "popover-shadow", "value": "0 12px 32px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4)", "purpose": "Profundidad para menús flotantes, selectores y menús popover." },
+      { "name": "button-shadow", "value": "0 1px 3px rgba(0, 0, 0, 0.4)", "purpose": "Elevación base sutil para botones de acción." },
+      { "name": "button-shadow-hover", "value": "0 4px 12px rgba(0, 0, 0, 0.55)", "purpose": "Elevación y respuesta al cursor para botones de acción." }
+    ],
+    "motion": [
+      { "name": "ease-out-spring", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Curva elástica para transiciones suaves de hover y elevación." },
+      { "name": "duration-fast", "value": "200ms", "purpose": "Micro-transición de cambio de borde y sombra." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "992px" },
+      { "name": "xl", "value": "1440px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Tarjeta KPI Double-Bezel",
+      "kind": "card",
+      "refersTo": "card-kpi",
+      "description": "Tarjeta insignia con doble bisel anidado y cifras con números tabulares.",
+      "html": "<div class=\"ds-kpi-outer\"><div class=\"ds-kpi-inner\"><span class=\"ds-eyebrow\">TOTAL MATRICULADOS</span><div class=\"ds-metric-value\">1,248</div><span class=\"ds-tag\">Base de datos en vivo</span></div></div>",
+      "css": ".ds-kpi-outer { background: #131C31; border: 1px solid rgba(255,255,255,0.14); border-radius: 18px; padding: 4px; box-shadow: 0 4px 16px rgba(0,0,0,0.55); transition: border-color 0.25s ease, box-shadow 0.25s ease; } .ds-kpi-outer:hover { border-color: rgba(96, 165, 250, 0.4); box-shadow: 0 8px 28px rgba(0,0,0,0.7), 0 0 0 2px rgba(96,165,250,0.5); } .ds-kpi-inner { background: linear-gradient(180deg, #18233D 0%, #11182B 100%); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px 20px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.08); font-family: 'Outfit', sans-serif; } .ds-eyebrow { display: inline-block; background: rgba(37,99,235,0.22); border: 1px solid rgba(59,130,246,0.35); color: #93C5FD; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; padding: 3px 8px; border-radius: 9999px; text-transform: uppercase; margin-bottom: 8px; } .ds-metric-value { font-size: 2.25rem; font-weight: 700; color: #F8FAFC; line-height: 1.1; font-variant-numeric: tabular-nums; margin-bottom: 6px; } .ds-tag { font-size: 0.8rem; color: #94A3B8; font-family: 'Plus Jakarta Sans', sans-serif; }"
+    },
+    {
+      "name": "Badge En Vivo",
+      "kind": "chip",
+      "refersTo": "badge-live",
+      "description": "Indicador de pulso activo que certifica la sincronización en tiempo real.",
+      "html": "<div class=\"ds-badge-live\"><span class=\"ds-dot\"></span> EN VIVO</div>",
+      "css": ".ds-badge-live { display: inline-flex; align-items: center; gap: 6px; background: #131C31; border: 1px solid rgba(255,255,255,0.12); color: #E2E8F0; padding: 4px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0.05em; } .ds-dot { width: 7px; height: 7px; border-radius: 50%; background-color: #10B981; box-shadow: 0 0 8px #10B981; }"
+    },
+    {
+      "name": "Botón Primario Zafiro",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Botón interactivo de comando con gradiente sutil y respuesta háptica.",
+      "html": "<button class=\"ds-btn-primary\">Actualizar Datos</button>",
+      "css": ".ds-btn-primary { background-color: #1E40AF; color: #F8FAFC; border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; padding: 10px 20px; font-size: 0.875rem; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.15s ease; } .ds-btn-primary:hover { background-color: #1D4ED8; transform: translateY(-1px); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "El Observatorio Académico de Élite (The Executive Academic Observatory)",
+    "overview": "El Observatorio Académico de Élite está concebido para conferir a los directivos y coordinadores una visión diáfana, soberana y en tiempo real del avance del proceso de matrícula estudiantil. La interfaz prescinde del ruido ornamental para abrazar una densidad analítica impecable, donde cada cifra posee peso de decisión y cada visualización responde a una pregunta operativa concreta. El sistema opera como un instrumento de precisión institucional: sereno, autoritativo y matemáticamente riguroso.",
+    "keyCharacteristics": [
+      "Claridad Jerárquica Absoluta: Los totales y ratios de cumplimiento capturan la mirada en el primer milisegundo mediante cifras en escala display con números tabulares.",
+      "Doble Bisel Anidado (Double-Bezel): Un marco exterior protector aloja un contenedor interior biselado con gradiente sutil y realce de luz especular superior.",
+      "Tipografía Bipolar Calibrada: Outfit comanda la escena analítica para titulares y números de alto impacto, mientras Plus Jakarta Sans gestiona el ritmo de lectura y microcopias.",
+      "Gráficos Transparentes Integrados: Los gráficos Plotly se funden con el fondo del contenedor, eliminando bordes internos y cajas duras."
+    ],
+    "rules": [
+      {
+        "name": "The Strict Data Tint Rule",
+        "body": "Los colores de acento (#E11D48, #059669, #D97706) están estrictamente restringidos a codificar datos reales (áreas, turnos, metas de progreso). Ningún contenedor estático ni adorno tipográfico puede emplearlos sin un significado analítico subyacente.",
+        "section": "colors"
+      },
+      {
+        "name": "The Contrast Floor Rule",
+        "body": "Todo texto secundario y etiqueta numérica debe sostener un ratio de contraste mínimo de 4.5:1 contra su superficie inmediata, tanto en modo oscuro como en modo claro.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Integrity Rule",
+        "body": "Todo número que exprese una cantidad de alumnos, vacantes, porcentajes o fechas debe renderizarse con la propiedad CSS font-variant-numeric: tabular-nums para garantizar alineación vertical perfecta entre filas y evitar oscilaciones visuales al refrescar datos.",
+        "section": "typography"
+      },
+      {
+        "name": "The Double-Bezel Anatomy Rule",
+        "body": "Todo contenedor principal de métrica o gráfico se compone de dos niveles: un marco exterior (bezel-outer) con borde exterior y sombra difusa, y un marco interior (bezel-inner) con relleno de gradiente sutil de 180° y bisel de luz interior.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do utilizar siempre font-variant-numeric: tabular-nums en toda cifra métrica y columna de total.",
+      "Do mantener el fondo de las figuras Plotly en transparencia total (rgba(0,0,0,0)) para que adopten el color y bisel del contenedor subyacente.",
+      "Do preservar la arquitectura de doble bisel (18px exterior, 12px interior) en todas las tarjetas de métricas nuevas.",
+      "Do respetar el mapeo semántico estricto de colores para turnos (Mañana: azul, Tarde: ámbar, Noche: violeta) y áreas académicas."
+    ],
+    "donts": [
+      "Don't exponer jamás nombres, apellidos o códigos de alumnos en tablas, gráficos, subtítulos ni tooltips.",
+      "Don't emplear bordes duros de color saturado puro sin transparencia o gradiente de bisel.",
+      "Don't mezclar tipografías ajenas a Outfit y Plus Jakarta Sans.",
+      "Don't utilizar sombras negras opacas y pesadas que manchen el lienzo; utilizar sombras difusas con resplandor cerúleo en hover."
+    ]
+  }
+}
