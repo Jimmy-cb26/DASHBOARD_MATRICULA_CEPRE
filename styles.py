@@ -81,36 +81,57 @@ def _inject_container_js(
         var CARD_SHADOW_HOVER = "{card_shadow_hover}";
 
         function applyStyles() {{
-            var containers = doc.querySelectorAll('div[data-testid="stVerticalBlockBorderWrapper"]');
-            containers.forEach(function(el) {{
-                el.style.setProperty('background-color', CARD_BG, 'important');
-                el.style.setProperty('border', '2px solid ' + CARD_BORDER, 'important');
-                el.style.setProperty('border-radius', '18px', 'important');
-                el.style.setProperty('padding', '1.2rem 1.4rem', 'important');
-                el.style.setProperty('box-shadow', CARD_SHADOW, 'important');
-                el.style.setProperty('margin-bottom', '0.85rem', 'important');
-                el.style.setProperty('overflow', 'visible', 'important');
-                el.style.setProperty('transition', 'border-color 0.25s ease, box-shadow 0.25s ease', 'important');
+            var targets = [];
 
-                var child = el.firstElementChild;
-                if (child) {{
-                    child.style.setProperty('background-color', 'transparent', 'important');
-                    child.style.setProperty('border', 'none', 'important');
-                    child.style.setProperty('box-shadow', 'none', 'important');
-                    child.style.setProperty('padding', '0', 'important');
+            // 1. Buscar por claves st-key específicas de las fichas
+            var keyElements = doc.querySelectorAll('div[class*="st-key-card_"]');
+            keyElements.forEach(function(el) {{ targets.push(el); }});
+
+            // 2. Si no encontró por clave o para asegurar cobertura completa, buscar por .chart-header-row
+            var headers = doc.querySelectorAll('.chart-header-row');
+            headers.forEach(function(hdr) {{
+                var c = hdr.closest('div[class*="st-key-card_"]') || hdr.closest('.stVerticalBlock') || hdr.closest('div[data-testid="stVerticalBlock"]');
+                if (c && !c.classList.contains('block-container') && targets.indexOf(c) === -1) {{
+                    targets.push(c);
                 }}
+            }});
+
+            // 3. Selector retrocompatible para versiones anteriores de Streamlit
+            var legacy = doc.querySelectorAll('div[data-testid="stVerticalBlockBorderWrapper"]');
+            legacy.forEach(function(el) {{
+                if (targets.indexOf(el) === -1) targets.push(el);
+            }});
+
+            targets.forEach(function(el) {{
+                el.style.setProperty('background-color', CARD_BG, 'important');
+                el.style.setProperty('border', '1.5px solid ' + CARD_BORDER, 'important');
+                el.style.setProperty('border-radius', '18px', 'important');
+                el.style.setProperty('padding', '1.25rem 1.5rem', 'important');
+                el.style.setProperty('box-shadow', CARD_SHADOW, 'important');
+                el.style.setProperty('margin-bottom', '1.15rem', 'important');
+                el.style.setProperty('overflow', 'visible', 'important');
+                el.style.setProperty('transition', 'border-color 0.28s ease, box-shadow 0.28s ease, transform 0.28s ease', 'important');
 
                 if (!el._marcoListening) {{
                     el._marcoListening = true;
                     el.addEventListener('mouseenter', function() {{
                         el.style.setProperty('border-color', CARD_BORDER_HOVER, 'important');
                         el.style.setProperty('box-shadow', CARD_SHADOW_HOVER, 'important');
+                        el.style.setProperty('transform', 'translateY(-2px)', 'important');
                     }});
                     el.addEventListener('mouseleave', function() {{
                         el.style.setProperty('border-color', CARD_BORDER, 'important');
                         el.style.setProperty('box-shadow', CARD_SHADOW, 'important');
+                        el.style.setProperty('transform', 'none', 'important');
                     }});
                 }}
+            }});
+
+            // Ocultar botón Deploy de Streamlit
+            var deployBtns = doc.querySelectorAll('.stAppDeployButton, .stDeployButton, [data-testid="stAppDeployButton"], [data-testid="stDeployButton"]');
+            deployBtns.forEach(function(btn) {{
+                btn.style.setProperty('display', 'none', 'important');
+                btn.style.setProperty('visibility', 'hidden', 'important');
             }});
         }}
 
@@ -143,11 +164,11 @@ def inject_custom_css(theme: str = "light"):
     if is_dark:
         app_bg = "#0B0F19"
         sidebar_bg = "#0D1322"
-        card_bg = "#152238"
-        card_border = "rgba(59, 130, 246, 0.85)"
-        card_border_hover = "#93C5FD"
-        card_shadow = "0 4px 16px rgba(0, 0, 0, 0.55)"
-        card_shadow_hover = "0 8px 28px rgba(0, 0, 0, 0.7), 0 0 0 2px rgba(96, 165, 250, 0.50)"
+        card_bg = "#131C31"
+        card_border = "rgba(255, 255, 255, 0.20)"
+        card_border_hover = "#60A5FA"
+        card_shadow = "0 4px 20px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.10)"
+        card_shadow_hover = "0 8px 30px rgba(0, 0, 0, 0.70), 0 0 0 2px rgba(96, 165, 250, 0.55)"
         text_primary = "#F8FAFC"
         text_secondary = "#CBD5E1"
         text_muted = "#94A3B8"
@@ -364,10 +385,26 @@ def inject_custom_css(theme: str = "light"):
         max-width: 1440px !important;
     }}
 
-    /* Ocultar elementos predeterminados de Streamlit */
-    #MainMenu {{visibility: hidden;}}
+    /* Ocultar elementos predeterminados de Streamlit y botón Deploy */
+    #MainMenu {{visibility: hidden; display: none !important;}}
     header[data-testid="stHeader"] {{background: transparent;}}
-    footer {{visibility: hidden;}}
+    footer {{visibility: hidden; display: none !important;}}
+
+    .stAppDeployButton,
+    .stDeployButton,
+    div[data-testid="stAppDeployButton"],
+    div[data-testid="stDeployButton"],
+    [data-testid="stToolbarActions"],
+    header .stAppDeployButton {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
 
     /* Ocultar el iframe de zero-height usado para inyección de JS */
     iframe[height="0"],
@@ -376,6 +413,26 @@ def inject_custom_css(theme: str = "light"):
         display: none !important;
         height: 0 !important;
         min-height: 0 !important;
+        overflow: hidden !important;
+    }}
+
+    /* Ocultar instrucciones automáticas de Streamlit ("Press Enter to submit form", etc.) */
+    [data-testid="InputInstructions"],
+    div[data-testid="InputInstructions"],
+    .e1xtngpi0,
+    div[data-testid="stTextInput"] [data-testid="InputInstructions"],
+    div[data-testid="stForm"] [data-testid="InputInstructions"],
+    div[data-testid="stTextInputInstructions"] {{
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        height: 0 !important;
+        width: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        line-height: 0 !important;
+        font-size: 0 !important;
+        pointer-events: none !important;
         overflow: hidden !important;
     }}
 
@@ -582,52 +639,57 @@ def inject_custom_css(theme: str = "light"):
      * (no usan CSS variables) para evitar conflictos con la caché de Emotion/Streamlit.
      * Esta clase enmarca tanto el texto de la categoría como su gráfico respectivo.
      */
+    /* ------------------------------------------------------------- */
+    /* MARCO COMPLETO PARA CATEGORÍAS Y GRÁFICOS                     */
+    /* ------------------------------------------------------------- */
+    div[class*="st-key-card_"],
+    .st-key-card_ciclo_local_turno,
+    .st-key-card_sede_turno,
+    .st-key-card_dist_turno,
+    .st-key-card_dist_area,
+    .st-key-card_evolucion_temporal,
+    .st-key-card_top_carreras,
+    div[data-testid="stVerticalBlock"]:has(> div > div > .chart-header-row),
+    div[data-testid="stVerticalBlock"]:has(> div > .chart-header-row),
+    div[data-testid="stVerticalBlockBorderWrapper"],
     .chart-frame {{
-        background-color: {card_bg};
-        border: 2px solid {card_border};
-        border-radius: 18px;
-        padding: 1.25rem 1.5rem;
-        box-shadow: {card_shadow};
-        transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.28s ease;
-        margin-bottom: 0.9rem;
-        overflow: hidden;
-        position: relative;
+        background-color: {card_bg} !important;
+        border: 1.5px solid {card_border} !important;
+        border-radius: 18px !important;
+        padding: 1.25rem 1.5rem !important;
+        box-shadow: {card_shadow} !important;
+        transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.28s ease !important;
+        margin-bottom: 1.15rem !important;
+        overflow: visible !important;
+        position: relative !important;
     }}
 
+    div[class*="st-key-card_"]:hover,
+    .st-key-card_ciclo_local_turno:hover,
+    .st-key-card_sede_turno:hover,
+    .st-key-card_dist_turno:hover,
+    .st-key-card_dist_area:hover,
+    .st-key-card_evolucion_temporal:hover,
+    .st-key-card_top_carreras:hover,
+    div[data-testid="stVerticalBlock"]:has(> div > div > .chart-header-row):hover,
+    div[data-testid="stVerticalBlock"]:has(> div > .chart-header-row):hover,
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover,
     .chart-frame:hover {{
-        border-color: {card_border_hover};
-        box-shadow: {card_shadow_hover};
-        transform: translateY(-2px);
+        border-color: {card_border_hover} !important;
+        box-shadow: {card_shadow_hover} !important;
+        transform: translateY(-2px) !important;
     }}
 
     /* Los bloques hijos de Streamlit dentro del marco no deben añadir estilos propios */
+    div[class*="st-key-card_"] [data-testid="element-container"],
+    div[class*="st-key-card_"] [data-testid="stVerticalBlock"]:not([class*="st-key-card_"]),
+    div[class*="st-key-card_"] > div,
     .chart-frame [data-testid="stVerticalBlock"],
     .chart-frame [data-testid="element-container"],
     .chart-frame > div {{
         background-color: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 0 !important;
-    }}
-
-    /* Selector fallback para el wrapper nativo de Streamlit (en caso de que se use en otro lugar) */
-    div[data-testid="stVerticalBlockBorderWrapper"] {{
-        background-color: {card_bg} !important;
-        border: 2px solid {card_border} !important;
-        outline: 1px solid {card_border} !important;
-        outline-offset: -1px !important;
-        border-radius: 18px !important;
-        padding: 1.2rem 1.4rem !important;
-        box-shadow: {card_shadow}, 0 0 0 1px {card_border} !important;
-        transition: border-color 0.25s ease, box-shadow 0.25s ease !important;
-        margin-bottom: 0.85rem !important;
-        overflow: visible !important;
-    }}
-
-    div[data-testid="stVerticalBlockBorderWrapper"]:hover {{
-        border-color: {card_border_hover} !important;
-        outline-color: {card_border_hover} !important;
-        box-shadow: {card_shadow_hover}, 0 0 0 2px {card_border_hover} !important;
     }}
 
     .chart-header-row {{
@@ -843,14 +905,24 @@ def inject_custom_css(theme: str = "light"):
 
     /* Contenedor Date Input (elimina marcos y medialunas blancas de BaseWeb) */
     .stDateInput div[data-baseweb="input"],
-    .stDateInput div[data-baseweb="base-input"],
-    div[data-testid="stDateInput"] div[data-baseweb="input"],
-    div[data-testid="stDateInput"] div[data-baseweb="base-input"] {{
+    div[data-testid="stDateInput"] div[data-baseweb="input"] {{
         background-color: var(--input-bg) !important;
         border: 1px solid var(--input-border) !important;
         border-radius: 10px !important;
         overflow: hidden !important;
         box-shadow: none !important;
+    }}
+
+    .stDateInput div[data-baseweb="base-input"],
+    div[data-testid="stDateInput"] div[data-baseweb="base-input"],
+    div[data-baseweb="input"] div[data-baseweb="base-input"],
+    div[data-baseweb="base-input"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
     }}
 
     .stDateInput input,
@@ -1070,6 +1142,361 @@ def inject_custom_css(theme: str = "light"):
         font-family: var(--font-display);
         font-variant-numeric: tabular-nums;
         border-right: none;
+    }}
+
+    /* ------------------------------------------------------------- */
+    /* PANTALLA DE LOGIN EJECUTIVA (Awwwards / High-End Design)       */
+    /* ------------------------------------------------------------- */
+    .login-wrapper {{
+        max-width: 440px;
+        margin: 1.5rem auto 1.25rem auto;
+        position: relative;
+        text-align: center;
+    }}
+
+    .login-ambient-glow {{
+        position: absolute;
+        top: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 320px;
+        height: 240px;
+        background: radial-gradient(circle, rgba(37, 99, 235, 0.15) 0%, rgba(59, 130, 246, 0.04) 50%, transparent 70%);
+        border-radius: 50%;
+        filter: blur(35px);
+        pointer-events: none;
+        z-index: 0;
+    }}
+
+    .login-header-box {{
+        position: relative;
+        z-index: 1;
+        margin-bottom: 1.5rem;
+    }}
+
+    .login-emblem-badge {{
+        width: 54px;
+        height: 54px;
+        margin: 0 auto 0.85rem auto;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #1E40AF 0%, #2563EB 50%, #3B82F6 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.65rem;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+    }}
+
+    .login-eyebrow {{
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--eyebrow-color);
+        background: var(--eyebrow-bg);
+        padding: 4px 12px;
+        border-radius: 9999px;
+        border: 1px solid var(--eyebrow-border);
+        margin-bottom: 0.65rem;
+    }}
+
+    .login-title {{
+        font-family: var(--font-display);
+        font-size: clamp(1.85rem, 3vw, 2.3rem);
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        color: var(--text-primary);
+        line-height: 1.15;
+        margin: 0;
+    }}
+
+    .login-subtitle {{
+        color: var(--text-secondary);
+        font-size: 0.92rem;
+        margin-top: 0.4rem;
+        letter-spacing: -0.01em;
+        line-height: 1.4;
+    }}
+
+    /* Formulario de Streamlit estilizado como Tarjeta Premium */
+    div[data-testid="stForm"] {{
+        background-color: var(--card-bg) !important;
+        border: 1.5px solid var(--card-border) !important;
+        border-radius: 20px !important;
+        padding: 2.25rem 2.25rem 2rem 2.25rem !important;
+        box-shadow: 0 20px 45px -12px rgba(15, 23, 42, 0.10), 0 4px 12px -2px rgba(15, 23, 42, 0.04) !important;
+        max-width: 440px !important;
+        margin: 0 auto !important;
+        position: relative !important;
+        z-index: 1 !important;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease !important;
+    }}
+
+    div[data-testid="stForm"]:hover {{
+        border-color: var(--card-border-hover) !important;
+        box-shadow: 0 24px 50px -10px rgba(15, 23, 42, 0.14), 0 8px 18px -2px rgba(15, 23, 42, 0.06) !important;
+    }}
+
+    /* Título del Formulario */
+    div[data-testid="stForm"] [data-testid="stHeadingWithActionElements"] h3,
+    div[data-testid="stForm"] h3,
+    div[data-testid="stForm"] [data-testid="stMarkdownContainer"] h3 {{
+        font-family: var(--font-display) !important;
+        font-size: 1.25rem !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.025em !important;
+        color: var(--text-primary) !important;
+        margin: 0 0 1.25rem 0 !important;
+        padding-bottom: 0.75rem !important;
+        border-bottom: 1px solid var(--divider-color) !important;
+    }}
+
+    /* Inputs de Usuario y Contraseña dentro del Formulario */
+    div[data-testid="stForm"] div[data-testid="stTextInput"] {{
+        margin-bottom: 1rem !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] label,
+    div[data-testid="stForm"] div[data-testid="stTextInput"] label p {{
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.06em !important;
+        color: var(--text-secondary) !important;
+        margin-bottom: 0.35rem !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] div[data-baseweb="input"] {{
+        background-color: var(--input-bg) !important;
+        border: 1.5px solid var(--input-border) !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        box-shadow: none !important;
+        transition: all 0.2s var(--ease-out-spring) !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] div[data-baseweb="base-input"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] div[data-baseweb="input"]:focus-within {{
+        border-color: #2563EB !important;
+        box-shadow: 0 0 0 3.5px rgba(37, 99, 235, 0.18) !important;
+        background-color: var(--card-bg) !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] div[data-baseweb="base-input"]:focus-within {{
+        border: none !important;
+        box-shadow: none !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] input {{
+        background-color: transparent !important;
+        color: var(--input-text) !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        padding: 0.7rem 0.95rem !important;
+        letter-spacing: -0.01em !important;
+        border: none !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] input::placeholder {{
+        color: var(--text-muted) !important;
+        opacity: 0.7 !important;
+    }}
+
+    /* Botón de toggle de visibilidad de contraseña (ojo) */
+    div[data-testid="stForm"] div[data-testid="stTextInput"] button,
+    div[data-testid="stForm"] div[data-baseweb="input"] button {{
+        width: auto !important;
+        background: transparent !important;
+        background-color: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: var(--text-secondary) !important;
+        padding: 4px 8px !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] button:hover,
+    div[data-testid="stForm"] div[data-baseweb="input"] button:hover {{
+        background: transparent !important;
+        background-color: transparent !important;
+        color: var(--text-primary) !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }}
+
+    div[data-testid="stForm"] div[data-testid="stTextInput"] button svg,
+    div[data-testid="stForm"] div[data-baseweb="input"] button svg {{
+        fill: var(--text-secondary) !important;
+    }}
+
+    /* Botón de Envío (Submit) Principal de Login */
+    div[data-testid="stFormSubmitButton"] {{
+        margin-top: 0.75rem !important;
+        margin-bottom: 0 !important;
+    }}
+
+    div[data-testid="stFormSubmitButton"] button,
+    div[data-testid="stFormSubmitButton"] > button,
+    div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button,
+    div[data-testid="stForm"] button[kind="primary"],
+    div[data-testid="stForm"] button[kind="secondary"] {{
+        width: 100% !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        background: linear-gradient(135deg, #1E40AF 0%, #2563EB 50%, #3B82F6 100%) !important;
+        background-color: #2563EB !important;
+        color: #FFFFFF !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        border-radius: 12px !important;
+        padding: 0.8rem 1.5rem !important;
+        font-size: 0.975rem !important;
+        font-weight: 700 !important;
+        letter-spacing: 0.015em !important;
+        box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+        cursor: pointer !important;
+        transition: all 0.25s var(--ease-out-spring) !important;
+    }}
+
+    div[data-testid="stFormSubmitButton"] button p,
+    div[data-testid="stFormSubmitButton"] button span,
+    div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button p,
+    div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button span {{
+        color: #FFFFFF !important;
+        font-weight: 700 !important;
+        font-size: 0.975rem !important;
+    }}
+
+    div[data-testid="stFormSubmitButton"] button:hover,
+    div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button:hover {{
+        background: linear-gradient(135deg, #1D4ED8 0%, #1E40AF 50%, #2563EB 100%) !important;
+        background-color: #1D4ED8 !important;
+        color: #FFFFFF !important;
+        border-color: rgba(255, 255, 255, 0.4) !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+    }}
+
+    div[data-testid="stFormSubmitButton"] button:active,
+    div[data-testid="stForm"] div[data-testid="stFormSubmitButton"] button:active {{
+        transform: translateY(0px) scale(0.98) !important;
+    }}
+
+    /* Insignia de Seguridad Institucional Integrada */
+    .login-security-card {{
+        max-width: 440px;
+        margin: 1.15rem auto 0 auto;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 0.85rem 1.15rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+        position: relative;
+        z-index: 1;
+    }}
+
+    .login-security-icon {{
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: var(--eyebrow-bg);
+        border: 1px solid var(--eyebrow-border);
+        color: var(--eyebrow-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }}
+
+    .login-security-text {{
+        font-size: 0.775rem;
+        line-height: 1.4;
+        color: var(--text-secondary);
+        text-align: left;
+    }}
+
+    .login-security-text strong {{
+        display: block;
+        color: var(--text-primary);
+        font-weight: 700;
+        font-size: 0.825rem;
+        margin-bottom: 2px;
+    }}
+
+    /* Alerta de Error de Autenticación Personalizada */
+    .login-error-card {{
+        max-width: 440px;
+        margin: 1.15rem auto 0 auto;
+        background: rgba(239, 68, 68, 0.08);
+        border: 1px solid rgba(239, 68, 68, 0.35);
+        border-radius: 14px;
+        padding: 0.85rem 1.15rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #DC2626;
+        position: relative;
+        z-index: 1;
+        animation: login-shake 0.4s ease-in-out;
+    }}
+
+    .login-error-icon {{
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }}
+
+    .login-error-text {{
+        font-size: 0.785rem;
+        line-height: 1.4;
+        color: #DC2626;
+        text-align: left;
+    }}
+
+    .login-error-text strong {{
+        display: block;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-bottom: 2px;
+    }}
+
+    @keyframes login-shake {{
+        0%, 100% {{ transform: translateX(0); }}
+        20%, 60% {{ transform: translateX(-5px); }}
+        40%, 80% {{ transform: translateX(5px); }}
+    }}
+
+    /* Pie de Página Institucional del Login */
+    .login-footer-info {{
+        text-align: center;
+        margin: 1.75rem auto 0 auto;
+        max-width: 440px;
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        line-height: 1.55;
+        letter-spacing: 0.02em;
+        position: relative;
+        z-index: 1;
+    }}
+
+    .login-footer-info strong {{
+        color: var(--text-secondary);
+        font-weight: 700;
+        letter-spacing: 0.04em;
     }}
 
     /* ------------------------------------------------------------- */

@@ -22,15 +22,19 @@ class TestDashboardMatriculas(unittest.TestCase):
         self.assertIn("usernames", cfg["credentials"])
         users = cfg["credentials"]["usernames"]
         
-        # Probar usuario admin con clave admin2026
-        self.assertIn("admin", users)
-        admin_hash = users["admin"]["password"].encode("utf-8")
-        self.assertTrue(bcrypt.checkpw("admin2026".encode("utf-8"), admin_hash))
+        # Probar usuarios autorizados vigentes
+        self.assertIn("jflores", users)
+        jflores_hash = users["jflores"]["password"].encode("utf-8")
+        self.assertTrue(bcrypt.checkpw("dire2690".encode("utf-8"), jflores_hash))
 
-        # Probar usuario jperez con clave jperez2026
-        self.assertIn("jperez", users)
-        jperez_hash = users["jperez"]["password"].encode("utf-8")
-        self.assertTrue(bcrypt.checkpw("jperez2026".encode("utf-8"), jperez_hash))
+        self.assertIn("jcubas", users)
+        jcubas_hash = users["jcubas"]["password"].encode("utf-8")
+        self.assertTrue(bcrypt.checkpw("INFOJC18".encode("utf-8"), jcubas_hash))
+
+        # Verificar que los usuarios eliminados no existan
+        self.assertNotIn("admin", users)
+        self.assertNotIn("jperez", users)
+        self.assertNotIn("directivo", users)
 
     def test_02_database_engine(self):
         """Verifica que el engine de base de datos se inicialice correctamente."""

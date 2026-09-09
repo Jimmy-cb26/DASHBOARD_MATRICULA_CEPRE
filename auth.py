@@ -33,12 +33,16 @@ def load_authenticator():
     cookie_key = cookie_cfg.get("key", "matriculas_secret_key_default")
     cookie_expiry_days = float(cookie_cfg.get("expiry_days", 0.33))
 
+    import streamlit_authenticator.params as stauth_params
+    stauth_params.PRE_LOGIN_SLEEP_TIME = 0.0
+
     authenticator = stauth.Authenticate(
         credentials=credentials,
         cookie_name=cookie_name,
         cookie_key=cookie_key,
         cookie_expiry_days=cookie_expiry_days,
-        auto_hash=False
+        auto_hash=False,
+        login_sleep_time=0.0
     )
     return authenticator
 
@@ -52,54 +56,89 @@ def setup_auth_flow(authenticator):
     auth_status = st.session_state.get("authentication_status")
 
     if not auth_status:
-        # Estructura centrada de alta calidad visual
-        col1, col2, col3 = st.columns([1, 1.6, 1])
-        with col2:
-            st.markdown(
-                """
-                <div style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem;">
-                    <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: #1D4ED8; background: #EFF6FF; padding: 4px 12px; border-radius: 9999px; border: 1px solid #DBEAFE; margin-bottom: 0.75rem;">
-                        <span>🏛️</span> SISTEMA DE ADMISIÓN Y MATRÍCULA
+        # Durante el estado no autenticado, ocultar la barra lateral por completo para evitar saltos de layout
+        st.markdown(
+            """
+            <style>
+            section[data-testid="stSidebar"],
+            div[data-testid="collapsedControl"] {
+                display: none !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        login_placeholder = st.empty()
+
+        with login_placeholder.container():
+            # Centrado con proporción áurea para tarjetas de autenticación
+            col1, col2, col3 = st.columns([1, 1.3, 1])
+            with col2:
+                st.markdown(
+                    """
+                    <div class="login-wrapper">
+                        <div class="login-ambient-glow"></div>
+                        <div class="login-header-box">
+                            <div class="login-emblem-badge">🏛️</div>
+                            <div class="login-eyebrow">
+                                <span>SISTEMA DE ADMISIÓN Y MATRÍCULA</span>
+                            </div>
+                            <h1 class="login-title">Portal de Monitoreo</h1>
+                            <p class="login-subtitle">
+                                Acceso restringido para el seguimiento ejecutivo en tiempo real
+                            </p>
+                        </div>
                     </div>
-                    <h2 style="font-family: 'Outfit', sans-serif; font-size: 2.1rem; font-weight: 700; letter-spacing: -0.035em; color: #0F172A; margin: 0;">
-                        Portal de Monitoreo
-                    </h2>
-                    <p style="color: #64748B; font-size: 0.92rem; margin-top: 0.35rem;">
-                        Acceso restringido para el seguimiento ejecutivo en tiempo real
-                    </p>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            # Formulario de inicio de sesión
-            try:
-                authenticator.login(
-                    location="main",
-                    max_login_attempts=3,
-                    fields={
-                        "Form name": "Credenciales de Acceso",
-                        "Username": "Usuario",
-                        "Password": "Contraseña",
-                        "Login": "Ingresar al Tablero"
-                    }
+                    """,
+                    unsafe_allow_html=True,
                 )
-            except Exception as e:
-                st.error(f"Error en el sistema de autenticación: {e}")
 
-            auth_status = st.session_state.get("authentication_status")
+                # Formulario de inicio de sesión
+                try:
+                    authenticator.login(
+                        location="main",
+                        max_login_attempts=3,
+                        fields={
+                            "Form name": "Credenciales de Acceso",
+                            "Username": "Usuario",
+                            "Password": "Contraseña",
+                            "Login": "Ingresar al Tablero",
+                        },
+                    )
+                except Exception as e:
+                    st.error(f"Error en el sistema de autenticación: {e}")
 
-            if auth_status is False:
-                st.error("Credenciales incorrectas. Verifique su usuario y contraseña.")
-            elif auth_status is None:
-                st.info("🔒 Ingrese con su cuenta autorizada institucional para acceder.")
-                
-                with st.expander("ℹ️ Cuentas de Acceso Predefinidas", expanded=False):
-                    st.markdown("""
-                    - **`admin`** *(Administrador del Sistema)*
-                    - **`jperez`** *(Juan Pérez - Analista)*
-                    - **`directivo`** *(Dirección Académica)*
-                    """)
+                auth_status = st.session_state.get("authentication_status")
+
+                if auth_status is False:
+                    st.markdown(
+                        """
+                        <div class="login-error-card">
+                            <div class="login-error-icon">⚠️</div>
+                            <div class="login-error-text">
+                                <strong>Credenciales incorrectas</strong>
+                                <span>El usuario o la contraseña ingresados no son válidos. Por favor, verifique sus datos.</span>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                st.markdown(
+                    """
+                    <div class="login-footer-info">
+                        <strong>UNIVERSIDAD NACIONAL MAYOR DE SAN MARCOS</strong><br>
+                        Centro Preuniversitario · Sistema de Admisión y Matrícula
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+        # Si las credenciales fueron correctas en este ciclo, limpiar de inmediato el placeholder y reejecutar
+        if auth_status is True:
+            login_placeholder.empty()
+            st.rerun()
 
         # Detener la ejecución del dashboard hasta que la autenticación sea exitosa
         st.stop()

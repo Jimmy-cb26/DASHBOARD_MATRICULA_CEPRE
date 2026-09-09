@@ -481,7 +481,7 @@ if kpi_data["total_matriculados"] == 0:
 row1_col1, row1_col2 = st.columns([1.45, 1.25])
 
 with row1_col1:
-    with st.container(border=True):
+    with st.container(border=True, key="card_ciclo_local_turno"):
         st.markdown(
             """
             <div class="chart-header-row">
@@ -553,7 +553,7 @@ with row1_col1:
             st.info("No se encontraron registros con los filtros seleccionados.")
 
 with row1_col2:
-    with st.container(border=True):
+    with st.container(border=True, key="card_sede_turno"):
         st.markdown(
             """
             <div class="chart-header-row">
@@ -622,7 +622,7 @@ with row1_col2:
 row2_col1, row2_col2 = st.columns([1.15, 1.45])
 
 with row2_col1:
-    with st.container(border=True):
+    with st.container(border=True, key="card_dist_turno"):
         st.markdown(
             """
             <div class="chart-header-row">
@@ -669,7 +669,7 @@ with row2_col1:
             st.plotly_chart(fig_turno, use_container_width=True, config={"displayModeBar": False})
 
 with row2_col2:
-    with st.container(border=True):
+    with st.container(border=True, key="card_dist_area"):
         st.markdown(
             """
             <div class="chart-header-row">
@@ -719,7 +719,7 @@ with row2_col2:
 # -----------------------------------------------------------------------------
 # 9. CUADRÍCULA BENTO 3: Evolución Cronológica de Matrículas (Ancho Completo)
 # -----------------------------------------------------------------------------
-with st.container(border=True):
+with st.container(border=True, key="card_evolucion_temporal"):
     st.markdown(
         """
         <div class="chart-header-row">
@@ -809,7 +809,7 @@ with st.container(border=True):
 # -----------------------------------------------------------------------------
 # 10. CUADRÍCULA BENTO 4: Top 15 Carreras con Mayor Demanda (Ancho Completo)
 # -----------------------------------------------------------------------------
-with st.container(border=True):
+with st.container(border=True, key="card_top_carreras"):
     st.markdown(
         """
         <div class="chart-header-row">
