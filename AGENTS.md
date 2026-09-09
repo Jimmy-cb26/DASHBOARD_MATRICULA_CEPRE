@@ -105,6 +105,16 @@ d:\pra\dashboard_matriculados/
 - **Carreras registradas:** 70 carreras profesionales (con Medicina Humana y Derecho liderando volumen)
 - **Ciclos vigentes:** `ESP_2026_II`, `ORD_2026_II`, `SUP_2027_I`
 
+### 5.2. Vista de Pagos Recientes (`vw_pagos_recientes` / `DB_PAGOS_VIEW`)
+
+| Columna | Tipo | Descripción | Uso en Dashboard |
+|---|---|---|---|
+| `idproducto` | int(11) | Identificador del producto bancario | Mapeo de ciclo (2: ORD, 5: ESP, 81: SUP) |
+| `anio_prod` | int(11) | Año del producto | Trazabilidad de año académico |
+| `pago_ciclo` | varchar(11) | Ciclo (`ORD_2026_II`, `ESP_2026_II`, `SUP_2027_I`) | Filtro dinámico con selector de ciclo |
+| `monto_pago` | double | Monto recaudado del pago | Sumatoria agregada en tarjeta KPI |
+| `fecha_pago` | date | Fecha de recepción en banco | Trazabilidad reciente (últimos 3 días) |
+
 ---
 
 ## 6. Comandos Operativos Clave

@@ -21,6 +21,7 @@ DB_NAME = os.getenv("DB_NAME", "")
 DB_USER = os.getenv("DB_USER", "")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_VIEW = os.getenv("DB_VIEW", "vista_matriculas")
+DB_PAGOS_VIEW = os.getenv("DB_PAGOS_VIEW", "vw_pagos_recientes")
 FORCE_DEMO = os.getenv("DEMO_MODE", "false").lower() in ("true", "1", "yes")
 
 _ENGINE = None
@@ -129,6 +130,34 @@ from sqlalchemy.pool import StaticPool
 
 DEMO_DB_PATH = os.path.join(os.path.dirname(__file__), "demo_data.sqlite")
 
+def _create_synthetic_pagos_dataset() -> pd.DataFrame:
+    """
+    Genera un conjunto de datos sintético para vw_pagos_recientes
+    con la misma estructura y ciclos observados en producción.
+    """
+    today = date.today()
+    records = [
+        # ORD_2026_II (9 pagos x S/ 2,700)
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": today.strftime("%Y-%m-%d")},
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": (today - timedelta(days=1)).strftime("%Y-%m-%d")},
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": (today - timedelta(days=1)).strftime("%Y-%m-%d")},
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": today.strftime("%Y-%m-%d")},
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": (today - timedelta(days=1)).strftime("%Y-%m-%d")},
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": (today - timedelta(days=1)).strftime("%Y-%m-%d")},
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": (today - timedelta(days=2)).strftime("%Y-%m-%d")},
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": (today - timedelta(days=1)).strftime("%Y-%m-%d")},
+        {"idproducto": 2, "anio_prod": 2026, "pago_ciclo": "ORD_2026_II", "monto_pago": 2700.0, "fecha_pago": (today - timedelta(days=2)).strftime("%Y-%m-%d")},
+        # ESP_2026_II (1 pago x S/ 1,430)
+        {"idproducto": 5, "anio_prod": 2026, "pago_ciclo": "ESP_2026_II", "monto_pago": 1430.0, "fecha_pago": (today - timedelta(days=1)).strftime("%Y-%m-%d")},
+        # SUP_2027_I (4 pagos x S/ 385)
+        {"idproducto": 81, "anio_prod": 2026, "pago_ciclo": "SUP_2027_I", "monto_pago": 385.0, "fecha_pago": today.strftime("%Y-%m-%d")},
+        {"idproducto": 81, "anio_prod": 2026, "pago_ciclo": "SUP_2027_I", "monto_pago": 385.0, "fecha_pago": today.strftime("%Y-%m-%d")},
+        {"idproducto": 81, "anio_prod": 2026, "pago_ciclo": "SUP_2027_I", "monto_pago": 385.0, "fecha_pago": today.strftime("%Y-%m-%d")},
+        {"idproducto": 81, "anio_prod": 2026, "pago_ciclo": "SUP_2027_I", "monto_pago": 385.0, "fecha_pago": (today - timedelta(days=1)).strftime("%Y-%m-%d")},
+    ]
+    return pd.DataFrame(records)
+
+
 def _init_demo_engine():
     """
     Crea una base de datos SQLite persistente para modo demostración
@@ -140,17 +169,24 @@ def _init_demo_engine():
         poolclass=StaticPool,
         echo=False
     )
-    # Si la tabla ya existe y tiene registros, no la regeneramos innecesariamente
+    # Verificar si ambas tablas ya existen y tienen registros
     try:
         with engine.connect() as conn:
-            res = conn.execute(text(f"SELECT COUNT(*) FROM {DB_VIEW}")).scalar()
-            if res and res > 0:
+            res_view = conn.execute(text(f"SELECT COUNT(*) FROM {DB_VIEW}")).scalar()
+            res_pagos = conn.execute(text(f"SELECT COUNT(*) FROM {DB_PAGOS_VIEW}")).scalar()
+            if res_view and res_view > 0 and res_pagos and res_pagos > 0:
                 return engine
     except Exception:
         pass
 
+    # Generar y persistir dataset de matrículas
     df = _create_synthetic_dataset(920)
     df.to_sql(DB_VIEW, con=engine, if_exists="replace", index=False)
+
+    # Generar y persistir dataset de pagos recientes
+    df_pagos = _create_synthetic_pagos_dataset()
+    df_pagos.to_sql(DB_PAGOS_VIEW, con=engine, if_exists="replace", index=False)
+
     return engine
 
 
@@ -213,3 +249,8 @@ def get_db_engine():
 def get_view_name() -> str:
     """Retorna el nombre de la vista en la base de datos."""
     return DB_VIEW
+
+
+def get_pagos_view_name() -> str:
+    """Retorna el nombre de la vista de pagos recientes en la base de datos."""
+    return DB_PAGOS_VIEW

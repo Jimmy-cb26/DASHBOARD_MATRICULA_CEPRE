@@ -354,8 +354,9 @@ st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)
 
 # 6. Tarjetas KPI con Arquitectura Double-Bezel
 kpi_data = queries.get_kpis(current_filters)
+pagos_data = queries.get_pagos_pendientes(current_filters)
 
-kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
+kpi_c1, kpi_c2, kpi_c3, kpi_c4, kpi_c5 = st.columns(5)
 
 with kpi_c1:
     st.markdown(
@@ -371,32 +372,6 @@ with kpi_c1:
     )
 
 with kpi_c2:
-    st.markdown(
-        create_kpi_card_html(
-            title="Locales Activos",
-            value=str(kpi_data["locales_activos"]),
-            subtitle="Sedes con postulantes registrados",
-            icon="🏫",
-            accent_color="#0284C7",
-            icon_bg="rgba(2, 132, 199, 0.08)",
-        ),
-        unsafe_allow_html=True,
-    )
-
-with kpi_c3:
-    st.markdown(
-        create_kpi_card_html(
-            title="Carreras Activas",
-            value=str(kpi_data["carreras_activas"]),
-            subtitle="Programas académicos solicitados",
-            icon="🎓",
-            accent_color="#6366F1",
-            icon_bg="rgba(99, 102, 241, 0.08)",
-        ),
-        unsafe_allow_html=True,
-    )
-
-with kpi_c4:
     matriculados_hoy = kpi_data["matriculados_hoy"]
     subt_hoy = "Inscripciones registradas hoy" if matriculados_hoy > 0 else "Sin nuevas inscripciones hoy"
     accent_hoy = "#059669" if matriculados_hoy > 0 else "#64748B"
@@ -414,6 +389,56 @@ with kpi_c4:
             badge=badge_hoy,
             badge_bg="rgba(5, 150, 105, 0.12)",
             badge_color="#059669",
+        ),
+        unsafe_allow_html=True,
+    )
+
+with kpi_c3:
+    total_pagos = pagos_data["total_pagos"]
+    subt_pagos = "En espera de inscripción" if total_pagos > 0 else "Sin pagos pendientes"
+    accent_pagos = "#D97706" if total_pagos > 0 else "#64748B"
+    icon_bg_pagos = "rgba(217, 119, 6, 0.08)" if total_pagos > 0 else "rgba(100, 116, 139, 0.08)"
+    badge_pagos = "● Pendientes" if total_pagos > 0 else None
+    badge_bg_pagos = "rgba(217, 119, 6, 0.12)" if total_pagos > 0 else "rgba(100, 116, 139, 0.12)"
+    badge_color_pagos = "#D97706" if total_pagos > 0 else "#64748B"
+
+    st.markdown(
+        create_kpi_card_html(
+            title="Pagos por Matricular",
+            value=f"{total_pagos:,}",
+            subtitle=subt_pagos,
+            icon="💳",
+            accent_color=accent_pagos,
+            icon_bg=icon_bg_pagos,
+            badge=badge_pagos,
+            badge_bg=badge_bg_pagos,
+            badge_color=badge_color_pagos,
+        ),
+        unsafe_allow_html=True,
+    )
+
+with kpi_c4:
+    st.markdown(
+        create_kpi_card_html(
+            title="Locales Activos",
+            value=str(kpi_data["locales_activos"]),
+            subtitle="Sedes con postulantes registrados",
+            icon="🏫",
+            accent_color="#0284C7",
+            icon_bg="rgba(2, 132, 199, 0.08)",
+        ),
+        unsafe_allow_html=True,
+    )
+
+with kpi_c5:
+    st.markdown(
+        create_kpi_card_html(
+            title="Carreras Activas",
+            value=str(kpi_data["carreras_activas"]),
+            subtitle="Programas académicos solicitados",
+            icon="🎓",
+            accent_color="#6366F1",
+            icon_bg="rgba(99, 102, 241, 0.08)",
         ),
         unsafe_allow_html=True,
     )
@@ -477,7 +502,11 @@ with row1_col1:
 
             # Renderizado directo de la tabla ejecutiva solicitada
             st.markdown(
-                create_executive_table_html(df_resumen, is_dark=is_dark),
+                create_executive_table_html(
+                    df_resumen,
+                    is_dark=is_dark,
+                    pagos_pendientes=pagos_data["total_pagos"],
+                ),
                 unsafe_allow_html=True,
             )
 
@@ -495,7 +524,7 @@ with row1_col1:
                     unsafe_allow_html=True,
                 )
             with col_act2:
-                # Formato plano detallado con total al pie tal como se visualiza en la tabla
+                # Formato plano detallado con total y pagos al pie tal como se visualiza en la tabla
                 df_plano_export = df_resumen.copy()
                 total_plano_row = pd.DataFrame([{
                     "CICLO": "",
@@ -503,7 +532,13 @@ with row1_col1:
                     "TURNO": "TOTAL GENERAL",
                     "MATRICULADOS": total_matriculados_tabla,
                 }])
-                df_plano_export = pd.concat([df_plano_export, total_plano_row], ignore_index=True)
+                pagos_plano_row = pd.DataFrame([{
+                    "CICLO": "",
+                    "LOCAL": "",
+                    "TURNO": "PAGOS QUE TODAVIA NO SE MATRICULAN:",
+                    "MATRICULADOS": pagos_data["total_pagos"],
+                }])
+                df_plano_export = pd.concat([df_plano_export, total_plano_row, pagos_plano_row], ignore_index=True)
                 csv_plano = df_plano_export.to_csv(index=False).encode("utf-8-sig")
 
                 st.download_button(
@@ -850,7 +885,7 @@ with st.container(border=True):
             df_carreras_export.rename(columns={"total": "MATRICULADOS"}, inplace=True)
             csv_carreras = df_carreras_export.to_csv(index=False).encode("utf-8-sig")
             st.download_button(
-                label="📥 Exportar Ranking de Carreras (CSV)",
+                label="📥 Exportar Ranking de Carreras",
                 data=csv_carreras,
                 file_name=f"ranking_carreras_matricula_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
                 mime="text/csv",

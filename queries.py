@@ -10,7 +10,7 @@ from typing import Dict, Any, Tuple, List
 import pandas as pd
 from sqlalchemy import text
 import streamlit as st
-from db import get_db_engine, get_view_name
+from db import get_db_engine, get_view_name, get_pagos_view_name
 
 
 def _build_where_clause(filters: Dict[str, Any]) -> Tuple[str, Dict[str, Any]]:
@@ -325,4 +325,51 @@ def get_resumen_ciclo_local_turno(filters: Dict[str, Any]) -> pd.DataFrame:
     """
     with engine.connect() as conn:
         return pd.read_sql_query(text(sql), con=conn, params=params)
+
+
+@st.cache_data(ttl=30)
+def get_pagos_pendientes(filters: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Calcula la cantidad de pagos pendientes de matricularse y el monto acumulado
+    desde la vista vw_pagos_recientes, filtrando según el ciclo seleccionado (pago_ciclo).
+    """
+    engine, _, _ = get_db_engine()
+    view = get_pagos_view_name()
+
+    clauses = ["1=1"]
+    params = {}
+
+    # Filtro por ciclo(s) académico(s) de acuerdo al campo pago_ciclo
+    if filters.get("ciclos"):
+        placeholders = []
+        for i, val in enumerate(filters["ciclos"]):
+            p_name = f"ciclo_{i}"
+            placeholders.append(f":{p_name}")
+            params[p_name] = val
+        clauses.append(f"pago_ciclo IN ({', '.join(placeholders)})")
+
+    where_sql = " AND ".join(clauses)
+    sql = f"""
+        SELECT 
+            COUNT(*) AS total_pagos,
+            COALESCE(SUM(monto_pago), 0) AS total_monto
+        FROM {view}
+        WHERE {where_sql}
+    """
+    with engine.connect() as conn:
+        df = pd.read_sql_query(text(sql), con=conn, params=params)
+
+    if not df.empty:
+        row = df.iloc[0]
+        t_pagos = int(row["total_pagos"]) if pd.notnull(row["total_pagos"]) else 0
+        t_monto = float(row["total_monto"]) if pd.notnull(row["total_monto"]) else 0.0
+        return {
+            "total_pagos": t_pagos,
+            "total_monto": t_monto,
+        }
+    return {
+        "total_pagos": 0,
+        "total_monto": 0.0,
+    }
+
 

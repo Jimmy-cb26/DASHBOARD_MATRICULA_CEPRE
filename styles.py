@@ -499,7 +499,7 @@ def inject_custom_css(theme: str = "light"):
         background: var(--bezel-inner-bg);
         border: 1px solid var(--bezel-inner-border);
         border-radius: 12px;
-        padding: 1.15rem 1.25rem;
+        padding: 1.05rem 1.15rem;
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -555,7 +555,7 @@ def inject_custom_css(theme: str = "light"):
 
     .kpi-number {{
         font-family: var(--font-display);
-        font-size: clamp(2rem, 3.5vw, 2.75rem);
+        font-size: clamp(1.75rem, 2.5vw, 2.45rem);
         font-weight: 700;
         letter-spacing: -0.04em;
         color: var(--text-primary);
@@ -1014,13 +1014,24 @@ def inject_custom_css(theme: str = "light"):
     }}
 
     .executive-table tfoot td {{
-        padding: 12px 16px;
+        padding: 10px 16px;
         font-family: var(--font-sans);
-        border-top: 2px solid var(--table-tfoot-border);
-        border-bottom: 3px double var(--table-tfoot-border);
         color: var(--text-primary);
         background-color: var(--table-th-bg);
         font-weight: 700;
+    }}
+
+    .executive-table tfoot tr.total-row td {{
+        border-top: 2px solid var(--table-tfoot-border);
+        border-bottom: 1px solid var(--table-border);
+    }}
+
+    .executive-table tfoot tr.pagos-row td {{
+        border-top: 1px solid var(--table-border);
+    }}
+
+    .executive-table tfoot tr:last-child td {{
+        border-bottom: 3px double var(--table-tfoot-border);
     }}
 
     .executive-table tfoot td.total-label {{
@@ -1039,6 +1050,25 @@ def inject_custom_css(theme: str = "light"):
         font-family: var(--font-display);
         font-variant-numeric: tabular-nums;
         color: var(--table-th-color);
+        border-right: none;
+    }}
+
+    .executive-table tfoot td.pagos-label {{
+        text-align: right;
+        font-size: 0.85rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-primary);
+        border-right: 1px solid var(--table-border);
+    }}
+
+    .executive-table tfoot td.pagos-value {{
+        text-align: right;
+        font-size: 1.1rem;
+        font-weight: 800;
+        font-family: var(--font-display);
+        font-variant-numeric: tabular-nums;
         border-right: none;
     }}
 
@@ -1181,7 +1211,11 @@ def create_kpi_card_html(
     )
 
 
-def create_executive_table_html(df: pd.DataFrame, is_dark: bool = False) -> str:
+def create_executive_table_html(
+    df: pd.DataFrame,
+    is_dark: bool = False,
+    pagos_pendientes: int = None,
+) -> str:
     """
     Genera la tabla HTML ejecutiva basada exactamente en la especificación del usuario:
     - Columnas: CICLO, LOCAL, TURNO, MATRICULADOS
@@ -1189,6 +1223,7 @@ def create_executive_table_html(df: pd.DataFrame, is_dark: bool = False) -> str:
     - Celdas con bordes definidos (gridlines estilo hoja de cálculo ejecutiva)
     - Conteo por local y turno alineado a la derecha
     - Fila de TOTAL GENERAL en el pie de tabla con número en negrita
+    - Fila de PAGOS QUE TODAVIA NO SE MATRICULAN al pie de tabla
     """
     if df.empty:
         return """
@@ -1217,6 +1252,16 @@ def create_executive_table_html(df: pd.DataFrame, is_dark: bool = False) -> str:
 
     body_content = "".join(rows_html)
 
+    pagos_row_html = ""
+    if pagos_pendientes is not None:
+        pagos_color = "#FBBF24" if is_dark else "#D97706"
+        pagos_row_html = (
+            '<tr class="pagos-row">'
+            '<td colspan="3" class="pagos-label">PAGOS QUE TODAVIA NO SE MATRICULAN:</td>'
+            f'<td class="pagos-value" style="color: {pagos_color};">{int(pagos_pendientes):,}</td>'
+            '</tr>'
+        )
+
     return (
         '<div class="table-container-responsive">'
         '<table class="executive-table">'
@@ -1230,10 +1275,11 @@ def create_executive_table_html(df: pd.DataFrame, is_dark: bool = False) -> str:
         '</thead>'
         f'<tbody>{body_content}</tbody>'
         '<tfoot>'
-        '<tr>'
+        '<tr class="total-row">'
         '<td colspan="3" class="total-label">TOTAL GENERAL</td>'
         f'<td class="total-value">{total_general:,}</td>'
         '</tr>'
+        f'{pagos_row_html}'
         '</tfoot>'
         '</table>'
         '</div>'

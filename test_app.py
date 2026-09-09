@@ -135,7 +135,21 @@ class TestDashboardMatriculas(unittest.TestCase):
                 f"Violación de privacidad detectada: {intersection} en {cols}"
             )
 
+    def test_08_pagos_pendientes(self):
+        """Verifica que el cálculo de pagos por matricular funcione y respete filtros de ciclo."""
+        pagos_all = queries.get_pagos_pendientes({})
+        self.assertIn("total_pagos", pagos_all)
+        self.assertIn("total_monto", pagos_all)
+        self.assertGreaterEqual(pagos_all["total_pagos"], 0)
+        self.assertGreaterEqual(pagos_all["total_monto"], 0.0)
+
+        # Probar con filtro por ciclo ORD_2026_II
+        pagos_ord = queries.get_pagos_pendientes({"ciclos": ["ORD_2026_II"]})
+        self.assertIn("total_pagos", pagos_ord)
+        self.assertIn("total_monto", pagos_ord)
+        self.assertLessEqual(pagos_ord["total_pagos"], pagos_all["total_pagos"])
 
 
 if __name__ == "__main__":
     unittest.main()
+
