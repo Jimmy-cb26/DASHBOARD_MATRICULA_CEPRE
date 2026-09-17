@@ -153,6 +153,28 @@ class TestDashboardMatriculas(unittest.TestCase):
         self.assertIn("total_monto", pagos_ord)
         self.assertLessEqual(pagos_ord["total_pagos"], pagos_all["total_pagos"])
 
+    def test_09_default_theme_is_dark(self):
+        """Verifica que la configuración por defecto del proyecto sea Modo Oscuro."""
+        import inspect
+        import styles
+
+        # Verificar .streamlit/config.toml
+        with open(".streamlit/config.toml", "r", encoding="utf-8") as f:
+            config_content = f.read()
+        self.assertIn('base = "dark"', config_content)
+
+        # Verificar defaults en styles.py
+        sig_css = inspect.signature(styles.inject_custom_css)
+        self.assertEqual(sig_css.parameters["theme"].default, "dark")
+
+        sig_plotly = inspect.signature(styles.apply_plotly_theme)
+        self.assertEqual(sig_plotly.parameters["is_dark"].default, True)
+
+        # Verificar app.py inicialización
+        with open("app.py", "r", encoding="utf-8") as f:
+            app_content = f.read()
+        self.assertIn('st.session_state.theme = "dark"', app_content)
+
 
 if __name__ == "__main__":
     unittest.main()

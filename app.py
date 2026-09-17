@@ -42,7 +42,7 @@ from styles import (
 
 # 1. Inicialización de tema y estilos
 if "theme" not in st.session_state:
-    st.session_state.theme = "light"
+    st.session_state.theme = "dark"
 
 inject_custom_css(theme=st.session_state.theme)
 is_dark = (st.session_state.theme == "dark")

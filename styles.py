@@ -153,7 +153,7 @@ def _inject_container_js(
     components.html(js_code, height=0, width=0)
 
 
-def inject_custom_css(theme: str = "light"):
+def inject_custom_css(theme: str = "dark"):
     """
     Inyecta el sistema de diseño visual de élite para Streamlit,
     parametrizado de forma nativa para Modo Claro o Modo Oscuro.
@@ -1714,7 +1714,7 @@ def create_executive_table_html(
 
 
 
-def apply_plotly_theme(fig: go.Figure, height: int = 380, is_dark: bool = False) -> go.Figure:
+def apply_plotly_theme(fig: go.Figure, height: int = 380, is_dark: bool = True) -> go.Figure:
     """
     Aplica una plantilla Plotly moderna de nivel Awwwards:
     - Soporte nativo para Modo Claro y Modo Oscuro con alto contraste en ejes y títulos
