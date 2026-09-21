@@ -138,8 +138,10 @@ python generate_keys.py "MiPasswordSeguro2026!"
 
 ## 7. Usuarios Autorizados Predefinidos
 
-| Usuario | Clave inicial | Nombre |
+| Usuario | Nombre | Rol |
 |---|---|---|
-| `admin` | `admin2026` | Administrador del Sistema |
-| `jperez` | `jperez2026` | Juan Pérez |
-| `directivo` | `directivo2026` | Dirección Académica |
+| `jflores` | Director Ejecutivo | Dirección General |
+| `jcubas` | Responsable de Informática | Soporte / TI |
+| `jochoa` | Directora Académica | Gestión Académica |
+| `vvalverde` | Directora Administrativa | Gestión Administrativa |
+

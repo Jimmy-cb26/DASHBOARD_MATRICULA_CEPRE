@@ -31,6 +31,16 @@ class TestDashboardMatriculas(unittest.TestCase):
         jcubas_hash = users["jcubas"]["password"].encode("utf-8")
         self.assertTrue(bcrypt.checkpw("INFOJC18".encode("utf-8"), jcubas_hash))
 
+        self.assertIn("jochoa", users)
+        jochoa_hash = users["jochoa"]["password"].encode("utf-8")
+        self.assertTrue(bcrypt.checkpw("acad3701".encode("utf-8"), jochoa_hash))
+        self.assertEqual(users["jochoa"]["name"], "Directora Académica")
+
+        self.assertIn("vvalverde", users)
+        vvalverde_hash = users["vvalverde"]["password"].encode("utf-8")
+        self.assertTrue(bcrypt.checkpw("admi4812".encode("utf-8"), vvalverde_hash))
+        self.assertEqual(users["vvalverde"]["name"], "Directora Administrativa")
+
         # Verificar que los usuarios eliminados no existan
         self.assertNotIn("admin", users)
         self.assertNotIn("jperez", users)
