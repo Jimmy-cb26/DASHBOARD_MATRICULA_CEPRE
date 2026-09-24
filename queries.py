@@ -115,6 +115,13 @@ def get_distinct_filter_values() -> Dict[str, Any]:
     if isinstance(max_f, str):
         max_f = datetime.strptime(max_f, "%Y-%m-%d").date()
 
+    # Asegurar que el límite superior incluya al menos el día de hoy
+    today_curr = date.today()
+    if max_f:
+        max_f = max(max_f, today_curr)
+    else:
+        max_f = today_curr
+
     return {
         "ciclos": df_ciclos["CICLO"].tolist(),
         "locales": df_locales["LOCAL"].tolist(),

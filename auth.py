@@ -5,6 +5,7 @@ seguridad bcrypt y manejo fluido de sesiones.
 """
 
 import os
+from datetime import date
 import yaml
 from yaml.loader import SafeLoader
 import streamlit as st
@@ -137,6 +138,7 @@ def setup_auth_flow(authenticator):
 
         # Si las credenciales fueron correctas en este ciclo, limpiar de inmediato el placeholder y reejecutar
         if auth_status is True:
+            st.session_state["date_end"] = date.today()
             login_placeholder.empty()
             st.rerun()
 

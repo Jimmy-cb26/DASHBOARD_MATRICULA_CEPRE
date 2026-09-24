@@ -4,6 +4,7 @@ Valida conexión, consultas SQL, filtros, KPIs y política estricta de privacida
 """
 
 import unittest
+from datetime import date
 import bcrypt
 import yaml
 from yaml.loader import SafeLoader
@@ -64,6 +65,8 @@ class TestDashboardMatriculas(unittest.TestCase):
         self.assertGreater(len(filters["locales"]), 0)
         self.assertGreater(len(filters["turnos"]), 0)
         self.assertGreater(len(filters["areas"]), 0)
+        self.assertIn("max_fecha", filters)
+        self.assertGreaterEqual(filters["max_fecha"], date.today())
 
     def test_04_kpis(self):
         """Verifica que el cálculo de KPIs devuelva los 4 indicadores requeridos."""

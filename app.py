@@ -124,8 +124,10 @@ with st.sidebar:
     # Carga de opciones dinámicas desde la BD
     filter_options = queries.get_distinct_filter_values()
 
+    today = date.today()
     min_date = filter_options["min_fecha"]
-    max_date = filter_options["max_fecha"]
+    db_max_date = filter_options["max_fecha"]
+    max_date = max(db_max_date, today) if db_max_date else today
 
     ciclos_disponibles = filter_options["ciclos"]
     default_ciclo = "ORD_2026_II" if "ORD_2026_II" in ciclos_disponibles else (ciclos_disponibles[0] if ciclos_disponibles else "")
@@ -142,7 +144,7 @@ with st.sidebar:
     if "date_start" not in st.session_state:
         st.session_state.date_start = min_date
     if "date_end" not in st.session_state:
-        st.session_state.date_end = max_date
+        st.session_state.date_end = today
 
     def reset_filters_callback():
         st.session_state.sb_ciclo = default_ciclo
@@ -150,9 +152,15 @@ with st.sidebar:
         st.session_state.sb_turno = "Todos los turnos"
         st.session_state.sb_area = "Todas las áreas"
         st.session_state.date_start = min_date
-        st.session_state.date_end = max_date
+        st.session_state.date_end = date.today()
         st.session_state["toast_msg"] = "Filtros restablecidos a la vista general"
         st.session_state["toast_icon"] = "🔄"
+
+    def refresh_data_callback():
+        st.cache_data.clear()
+        st.session_state.date_end = date.today()
+        st.session_state["toast_msg"] = "Base de datos sincronizada: datos de matrícula al día"
+        st.session_state["toast_icon"] = "⚡"
 
     def format_ciclo_label(c: str) -> str:
         """Traduce códigos técnicos como ORD_2026_II a nombres institucionales claros."""
@@ -240,11 +248,12 @@ with st.sidebar:
         )
 
     with col_btn2:
-        if st.button("Actualizar", use_container_width=True, help="Consultar los datos más recientes de matrícula"):
-            st.cache_data.clear()
-            st.session_state["toast_msg"] = "Base de datos sincronizada: datos de matrícula al día"
-            st.session_state["toast_icon"] = "⚡"
-            st.rerun()
+        st.button(
+            "Actualizar",
+            use_container_width=True,
+            help="Consultar los datos más recientes de matrícula",
+            on_click=refresh_data_callback,
+        )
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
     
@@ -303,7 +312,7 @@ active_filters_count = sum([
     bool(selected_turnos),
     bool(selected_areas),
     bool(fecha_inicio and min_date and fecha_inicio > min_date),
-    bool(fecha_fin and max_date and fecha_fin < max_date),
+    bool(fecha_fin and today and fecha_fin < today),
 ])
 
 # 5. Cabecera Ejecutiva de Alto Impacto
